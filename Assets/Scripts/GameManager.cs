@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using System.Linq;
 
 public class GameManager : MonoBehaviour
 {
@@ -10,20 +11,21 @@ public class GameManager : MonoBehaviour
     [SerializeField] protected GameObject debugObject;
     [SerializeField] protected TextMeshProUGUI vectorText;
 
-    [Space(10)]
-
     [Header("Touch Controls")]
-    [SerializeField] protected float startRadius = 10; // amount of area needed to start the slash
-    protected float initialAngle, trackDelay = 0.0116f, currentDelay = 0, currentAngle;
-    protected Vector2 initialPos, touchPos, touchWorldPoint, lastTouch, currentVelo;
-    protected bool slashOn = false;
-
-    [Space(10)]
+    [SerializeField] protected float startRadius = 8;
+    [SerializeField] protected float stopDistance = 10;
+    [SerializeField] protected float stopTime = 1;
+    protected float initialAngle, currentAngle, stopTimeTrack;
+    protected Vector2 initialPos, touchPos, touchWorldPoint, lastTouch, currentVelo, lastStop;
+    protected bool slashOn = false, slashStart = false;
 
     [Header("Graphics")]
     [SerializeField] protected float minLineChange = 0.1f;
+    [SerializeField] protected float fadeSpeed = 5;
+    [SerializeField] protected GameObject slashPrefab;
     protected float linePosition = 0;
     protected LineRenderer slashLine;
+    protected List<LineRenderer> slashLines;
 
     private static GameManager _instance;
     public static GameManager Instance //Singleton Stuff
@@ -45,53 +47,98 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
-        slashLine = GetComponentInChildren<LineRenderer>();
+        slashLines = GetComponentsInChildren<LineRenderer>(true).ToList();
     }
 
     private void Update()
-    {
+    {   
         if (Input.GetMouseButtonDown(0))
         {
+            bool found = false;
+            foreach (var item in slashLines)
+            {
+                if (!item.gameObject.activeSelf)
+                {
+                    slashLine = item;
+                    found = true;
+                    break;
+                }
+            }
+            if (!found)
+            {
+                slashLine = Instantiate(slashPrefab).GetComponent<LineRenderer>();
+                slashLines.Add(slashLine);
+            }
+            slashLine.positionCount = 0;
+            slashLine.gameObject.SetActive(true);
+
             initialPos = GetTouchPos();
             initialAngle = 0;
             lastTouch = touchPos;
-            currentDelay = trackDelay - Time.deltaTime;
-            slashLine.positionCount = 0;
+            slashOn = false;
+            slashStart = false;
+
+            stopTimeTrack = 0;
+            lastStop = touchPos;
         }
         if (Input.GetMouseButton(0))
         {
-            currentDelay += Time.deltaTime;
-            if (currentDelay >= trackDelay)
+            var tempPos = touchPos;
+            GetTouchPos();
+            if (tempPos != touchPos)
             {
-                GetTouchPos();
-
-                currentDelay -= trackDelay;
-                currentVelo = touchPos - lastTouch;
-                currentAngle = Mathf.Rad2Deg * Mathf.Atan2(currentVelo.y, currentVelo.x);
-
-                if (currentAngle < 0)
+                lastTouch = tempPos;
+            }
+            
+            // slash stuff and graphics
+            if (!slashOn)
+            {
+                if ((touchPos - initialPos).magnitude > startRadius && !slashStart)
                 {
-                    currentAngle += 360;
+                    currentVelo = touchPos - lastTouch;
+                    currentAngle = Mathf.Rad2Deg * Mathf.Atan2(currentVelo.y, currentVelo.x);
+                    initialAngle = currentAngle;
+                    slashStart = true;
+                    slashOn = true;
                 }
-
-                // slash stuff and graphics
-                if (!slashOn)
+            }
+            else
+            {
+                if ((touchPos - lastStop).magnitude < stopDistance)
                 {
-                    if ((touchPos - initialPos).magnitude > startRadius)
+                    stopTimeTrack += Time.deltaTime;
+                    if (stopTimeTrack > stopTime)
                     {
-                        initialAngle = currentAngle;
-                        slashOn = true;
-                        Debug.Log("on");
-                    }
+                        slashOn = false;
+                        Debug.Log("too slow");
+                        stopTimeTrack = 0;
+                    } 
                 }
                 else
                 {
+                    lastStop = touchPos;
+                    stopTimeTrack = 0;
+                }
+                
+                if (slashOn)
+                {
                     if (slashLine.positionCount > 0)
                     {
-                        if (((Vector2)slashLine.GetPosition(slashLine.positionCount - 1) - touchWorldPoint).magnitude > minLineChange)
+                        Vector2 lastNode = slashLine.GetPosition(slashLine.positionCount - 1);
+                        if ((lastNode - touchWorldPoint).magnitude > minLineChange)
                         {
-                            slashLine.positionCount += 1;
-                            slashLine.SetPosition(slashLine.positionCount - 1, new Vector3(touchWorldPoint.x, touchWorldPoint.y, 0));
+                            currentVelo = touchWorldPoint - lastNode;
+                            currentAngle = Mathf.Rad2Deg * Mathf.Atan2(currentVelo.y, currentVelo.x);
+                            if (Mathf.Abs(Mathf.DeltaAngle(currentAngle, initialAngle)) > 85)
+                            {
+                                slashOn = false;
+                                Debug.Log("wrong ang");
+                            }
+                            else
+                            {
+                                slashLine.positionCount += 1;
+                                slashLine.SetPosition(slashLine.positionCount - 1, new Vector3(touchWorldPoint.x, touchWorldPoint.y, 0));
+                            }
                         }
                     }
                     else
@@ -100,27 +147,44 @@ public class GameManager : MonoBehaviour
                         slashLine.SetPosition(slashLine.positionCount - 1, new Vector3(touchWorldPoint.x, touchWorldPoint.y, 0));
                     }
                 }
+            }
 
-                // debug stuff
-                if (debugObject != null)
+            // debug stuff
+            if (debugObject != null)
+            {
+                debugObject.SetActive(debugOn);
+                if (Input.GetMouseButton(0))
                 {
-                    debugObject.SetActive(debugOn);
-                    if (Input.GetMouseButton(0))
-                    {
-                        vectorText.text = "Touch Vector: " + touchPos + "\n" + "Touch Velo: " + currentVelo + "\n" + "Angle: " + currentAngle;
-                    }
-                }
-
-                // setting last touch to current
-                if (Input.GetMouseButton(0) && lastTouch != touchPos)
-                {
-                    lastTouch = touchPos;
+                    vectorText.text = "Touch Vector: " + touchPos + "\n" + "Touch Velo: " + currentVelo + "\n" + "Angle: " + currentAngle;
                 }
             }
-        } 
+        }
+        else
+        {
+            slashLine = null;
+        }
         if (Input.GetMouseButtonUp(0))
         {
             slashOn = false;
+        }
+
+        foreach (var item in slashLines)
+        {
+            if (item.gameObject.activeSelf && (item != slashLine || (!slashOn && slashStart)))
+            {
+                var color = item.endColor;
+                color.a -= fadeSpeed * Time.deltaTime;
+                if (color.a <= 0)
+                {
+                    item.gameObject.SetActive(false);
+                    color.a = 1;
+                    item.endColor = color;
+                } 
+                else
+                {
+                    item.endColor = color;
+                }
+            }
         }
     }
 
