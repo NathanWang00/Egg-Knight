@@ -22,10 +22,12 @@ public class GameManager : MonoBehaviour
     [Header("Graphics")]
     [SerializeField] protected float minLineChange = 0.1f;
     [SerializeField] protected float fadeSpeed = 5;
-    [SerializeField] protected GameObject slashPrefab;
+    [SerializeField] protected GameObject slashPrefab, touchPrefab;
     protected float linePosition = 0;
     protected LineRenderer slashLine;
     protected List<LineRenderer> slashLines;
+
+    protected TapManager tapManager;
 
     private static GameManager _instance;
     public static GameManager Instance //Singleton Stuff
@@ -48,12 +50,21 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         slashLines = GetComponentsInChildren<LineRenderer>(true).ToList();
+        tapManager = GetComponentInChildren<TapManager>(true);
     }
 
     private void Update()
     {   
         if (Input.GetMouseButtonDown(0))
         {
+            // position tracking
+            initialPos = GetTouchPos();
+            initialAngle = 0;
+            lastTouch = touchPos;
+            stopTimeTrack = 0;
+            lastStop = touchPos;
+
+            // slash start
             bool found = false;
             foreach (var item in slashLines)
             {
@@ -69,17 +80,14 @@ public class GameManager : MonoBehaviour
                 slashLine = Instantiate(slashPrefab).GetComponent<LineRenderer>();
                 slashLines.Add(slashLine);
             }
-            slashLine.positionCount = 0;
+            slashLine.positionCount = 1;
+            slashLine.SetPosition(slashLine.positionCount - 1, new Vector3(touchWorldPoint.x, touchWorldPoint.y, 0));
             slashLine.gameObject.SetActive(true);
-
-            initialPos = GetTouchPos();
-            initialAngle = 0;
-            lastTouch = touchPos;
             slashOn = false;
             slashStart = false;
 
-            stopTimeTrack = 0;
-            lastStop = touchPos;
+            // tap start
+            tapManager.StartTap(touchWorldPoint);
         }
         if (Input.GetMouseButton(0))
         {
@@ -110,7 +118,6 @@ public class GameManager : MonoBehaviour
                     if (stopTimeTrack > stopTime)
                     {
                         slashOn = false;
-                        Debug.Log("too slow");
                         stopTimeTrack = 0;
                     } 
                 }
@@ -132,7 +139,6 @@ public class GameManager : MonoBehaviour
                             if (Mathf.Abs(Mathf.DeltaAngle(currentAngle, initialAngle)) > 85)
                             {
                                 slashOn = false;
-                                Debug.Log("wrong ang");
                             }
                             else
                             {
