@@ -10,19 +10,25 @@ public class GameManager : MonoBehaviour
     [SerializeField] protected bool debugOn;
     [SerializeField] protected GameObject debugObject;
     [SerializeField] protected TextMeshProUGUI vectorText;
+    [SerializeField] protected LineRenderer ratioLine;
+
+    [Header("Screen Calc")]
+    [SerializeField] protected Camera letterboxCam;
+    float extraX, extraY;
 
     [Header("Touch Controls")]
     [SerializeField] protected float startRadius = 8;
     [SerializeField] protected float stopDistance = 10;
     [SerializeField] protected float stopTime = 1;
+    [SerializeField] [Range(0f, 1f)] protected float playerEnemyRatio = 0.5f;
     protected float initialAngle, currentAngle, stopTimeTrack;
     protected Vector2 initialPos, touchPos, touchWorldPoint, lastTouch, currentVelo, lastStop;
-    protected bool slashOn = false, slashStart = false;
+    protected bool slashOn = false, slashStart = false, playerOrigin = false;
 
-    [Header("Graphics")]
+    [Header("Slash Graphics")]
     [SerializeField] protected float minLineChange = 0.1f;
     [SerializeField] protected float fadeSpeed = 5;
-    [SerializeField] protected GameObject slashPrefab, touchPrefab;
+    [SerializeField] protected GameObject slashPrefab;
     protected float linePosition = 0;
     protected LineRenderer slashLine;
     protected List<LineRenderer> slashLines;
@@ -54,7 +60,23 @@ public class GameManager : MonoBehaviour
     }
 
     private void Update()
-    {   
+    {
+        var camDimensions = new Vector2 (Camera.main.pixelWidth, Camera.main.pixelHeight);
+        Debug.Log(letterboxCam.pixelRect);
+        var camRatio = camDimensions.x / camDimensions.y;
+        Debug.Log(camRatio);
+        if (camRatio != 9 / 16)
+        {
+            if (camRatio > 9/16)
+            {
+                Debug.Log(1);
+            }
+            if (camRatio < 9/16)
+            {
+                Debug.Log(2);
+            }
+        }
+
         if (Input.GetMouseButtonDown(0))
         {
             // position tracking
@@ -88,6 +110,9 @@ public class GameManager : MonoBehaviour
 
             // tap start
             tapManager.StartTap(touchWorldPoint);
+
+            playerOrigin = touchPos.y < Camera.main.pixelHeight * playerEnemyRatio;
+            Debug.Log(playerOrigin);
         }
         if (Input.GetMouseButton(0))
         {
@@ -156,13 +181,9 @@ public class GameManager : MonoBehaviour
             }
 
             // debug stuff
-            if (debugObject != null)
+            if (Input.GetMouseButton(0))
             {
-                debugObject.SetActive(debugOn);
-                if (Input.GetMouseButton(0))
-                {
-                    vectorText.text = "Touch Vector: " + touchPos + "\n" + "Touch Velo: " + currentVelo + "\n" + "Angle: " + currentAngle;
-                }
+                vectorText.text = "Touch Vector: " + touchPos + "\n" + "Touch Velo: " + currentVelo + "\n" + "Angle: " + currentAngle;
             }
         }
         else
@@ -192,6 +213,17 @@ public class GameManager : MonoBehaviour
                 }
             }
         }
+
+        // Debug stuff
+        debugObject.SetActive(debugOn);
+        var pos = new Vector3(0, playerEnemyRatio * Camera.main.pixelHeight, 1);
+        var worldPos = Camera.main.ScreenToWorldPoint(pos);
+        worldPos.z = 1;
+        ratioLine.SetPosition(0, worldPos);
+        pos.x = 1920;
+        worldPos = Camera.main.ScreenToWorldPoint(pos);
+        worldPos.z = 1;
+        ratioLine.SetPosition(1, worldPos);
     }
 
     public Vector2 GetTouchPos() // also sets touchPos. If there's no touch, gives the last touchPos
