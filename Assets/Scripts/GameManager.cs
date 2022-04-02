@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using UnityEngine.UI;
 using System.Linq;
 
 public class GameManager : MonoBehaviour
@@ -14,16 +15,18 @@ public class GameManager : MonoBehaviour
 
     [Header("Screen Calc")]
     [SerializeField] protected Camera letterboxCam;
-    float extraX, extraY;
+    [SerializeField] protected CanvasScaler canvasScaler;
+    protected float extraX = 0, extraY = 0;
 
-    [Header("Touch Controls")]
+    [Header("Attack Controls")]
     [SerializeField] protected float startRadius = 8;
     [SerializeField] protected float stopDistance = 10;
     [SerializeField] protected float stopTime = 1;
+    [SerializeField] protected float tapTime = 0.1f;
     [SerializeField] [Range(0f, 1f)] protected float playerEnemyRatio = 0.5f;
-    protected float initialAngle, currentAngle, stopTimeTrack;
+    protected float initialAngle, currentAngle, stopTimeTrack, tapTimeTrack;
     protected Vector2 initialPos, touchPos, touchWorldPoint, lastTouch, currentVelo, lastStop;
-    protected bool slashOn = false, slashStart = false, playerOrigin = false;
+    protected bool slashOn = false, slashStart = false, playerOrigin = false, tapConditions = false;
 
     [Header("Slash Graphics")]
     [SerializeField] protected float minLineChange = 0.1f;
@@ -32,6 +35,9 @@ public class GameManager : MonoBehaviour
     protected float linePosition = 0;
     protected LineRenderer slashLine;
     protected List<LineRenderer> slashLines;
+
+    [Header("Player Controls")]
+    protected bool guardOn = false;
 
     protected TapManager tapManager;
 
@@ -61,19 +67,22 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
-        var camDimensions = new Vector2 (Camera.main.pixelWidth, Camera.main.pixelHeight);
-        Debug.Log(letterboxCam.pixelRect);
+        var camDimensions = new Vector2 (letterboxCam.pixelWidth, letterboxCam.pixelHeight);
         var camRatio = camDimensions.x / camDimensions.y;
-        Debug.Log(camRatio);
-        if (camRatio != 9 / 16)
+        if (camRatio != 9/16)
         {
-            if (camRatio > 9/16)
+            if (camRatio > 0.57)
             {
-                Debug.Log(1);
+                extraX = camDimensions.x - (camDimensions.y * 9 / 16);
             }
-            if (camRatio < 9/16)
+            if (camRatio < 0.56)
             {
-                Debug.Log(2);
+                extraY = camDimensions.y - (camDimensions.x * 16 / 9);
+                canvasScaler.matchWidthOrHeight = 0;
+            }
+            else
+            {
+                canvasScaler.matchWidthOrHeight = 1;
             }
         }
 
@@ -108,11 +117,19 @@ public class GameManager : MonoBehaviour
             slashOn = false;
             slashStart = false;
 
-            // tap start
-            tapManager.StartTap(touchWorldPoint);
-
             playerOrigin = touchPos.y < Camera.main.pixelHeight * playerEnemyRatio;
-            Debug.Log(playerOrigin);
+
+            // tap start
+            if (playerOrigin)
+            {
+                guardOn = true;
+            }
+            else
+            {
+                tapTimeTrack = 0;
+                tapConditions = true;
+            }
+            
         }
         if (Input.GetMouseButton(0))
         {
@@ -133,6 +150,26 @@ public class GameManager : MonoBehaviour
                     initialAngle = currentAngle;
                     slashStart = true;
                     slashOn = true;
+                    tapConditions = false;
+                }
+                else
+                {
+                    if (tapConditions)
+                    {
+                        if (tapTimeTrack == 0)
+                        {
+                            // lazy solution so that Time.deltaTime won't be added when it's 0
+                            tapTimeTrack = 0.0001f;
+                        }
+                        else
+                        {
+                            tapTimeTrack += Time.deltaTime;
+                            if (tapTimeTrack > tapTime)
+                            {
+                                tapConditions = false;
+                            }
+                        }
+                    }
                 }
             }
             else
@@ -192,7 +229,12 @@ public class GameManager : MonoBehaviour
         }
         if (Input.GetMouseButtonUp(0))
         {
+            if (tapConditions)
+            {
+                tapManager.StartTap(touchWorldPoint);
+            }
             slashOn = false;
+            guardOn = false;
         }
 
         foreach (var item in slashLines)
@@ -216,11 +258,11 @@ public class GameManager : MonoBehaviour
 
         // Debug stuff
         debugObject.SetActive(debugOn);
-        var pos = new Vector3(0, playerEnemyRatio * Camera.main.pixelHeight, 1);
+        var pos = new Vector3(0, (playerEnemyRatio * Camera.main.pixelHeight) + extraY/2, 1);
         var worldPos = Camera.main.ScreenToWorldPoint(pos);
         worldPos.z = 1;
         ratioLine.SetPosition(0, worldPos);
-        pos.x = 1920;
+        pos.x = Camera.main.pixelWidth + extraX/2;
         worldPos = Camera.main.ScreenToWorldPoint(pos);
         worldPos.z = 1;
         ratioLine.SetPosition(1, worldPos);
