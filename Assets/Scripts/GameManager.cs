@@ -12,6 +12,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] protected GameObject debugObject;
     [SerializeField] protected TextMeshProUGUI vectorText;
     [SerializeField] protected LineRenderer ratioLine;
+    [SerializeField] protected LineRenderer sideDodgeLine;
+    [SerializeField] protected LineRenderer backDodgeLine;
 
     [Header("Screen Calc")]
     [SerializeField] protected Camera letterboxCam;
@@ -24,6 +26,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] protected float stopTime = 1;
     [SerializeField] protected float tapTime = 0.1f;
     [SerializeField] [Range(0f, 1f)] protected float playerEnemyRatio = 0.5f;
+    [SerializeField] [Range(0f, 1f)] protected float backDodgeRatio = 0.9f;
+    [SerializeField] [Range(0f, 0.5f)] protected float sideDodgeRatio = 0.33f;
     protected float initialAngle, currentAngle, stopTimeTrack, tapTimeTrack;
     protected Vector2 initialPos, touchPos, touchWorldPoint, lastTouch, currentVelo, lastStop;
     protected bool slashOn = false, slashStart = false, playerOrigin = false, tapConditions = false;
