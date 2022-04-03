@@ -12,8 +12,9 @@ public class GameManager : MonoBehaviour
     [SerializeField] protected GameObject debugObject;
     [SerializeField] protected TextMeshProUGUI vectorText;
     [SerializeField] protected LineRenderer ratioLine;
-    [SerializeField] protected LineRenderer sideDodgeLine;
-    [SerializeField] protected LineRenderer backDodgeLine;
+    //[SerializeField] protected LineRenderer sideDodgeLineLeft;
+    //[SerializeField] protected LineRenderer sideDodgeLineRight;
+    //[SerializeField] protected LineRenderer backDodgeLine;
 
     [Header("Screen Calc")]
     [SerializeField] protected Camera letterboxCam;
@@ -26,8 +27,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] protected float stopTime = 1;
     [SerializeField] protected float tapTime = 0.1f;
     [SerializeField] [Range(0f, 1f)] protected float playerEnemyRatio = 0.5f;
-    [SerializeField] [Range(0f, 1f)] protected float backDodgeRatio = 0.9f;
-    [SerializeField] [Range(0f, 0.5f)] protected float sideDodgeRatio = 0.33f;
+    //[SerializeField] [Range(0f, 1f)] protected float backDodgeRatio = 0.1f;
+    //[SerializeField] [Range(0f, 0.5f)] protected float sideDodgeRatio = 0.33f;
     protected float initialAngle, currentAngle, stopTimeTrack, tapTimeTrack;
     protected Vector2 initialPos, touchPos, touchWorldPoint, lastTouch, currentVelo, lastStop;
     protected bool slashOn = false, slashStart = false, playerOrigin = false, tapConditions = false;
@@ -36,9 +37,12 @@ public class GameManager : MonoBehaviour
     [SerializeField] protected float minLineChange = 0.1f;
     [SerializeField] protected float fadeSpeed = 5;
     [SerializeField] protected GameObject slashPrefab;
+    [SerializeField] protected GameObject dodgePrefab;
     protected float linePosition = 0;
     protected LineRenderer slashLine;
-    protected List<LineRenderer> slashLines;
+    protected List<LineRenderer> slashLines = new List<LineRenderer>();
+    //protected LineRenderer dodgeLine;
+    protected List<LineRenderer> dodgeLines = new List<LineRenderer>();
 
     [Header("Player Controls")]
     protected bool guardOn = false;
@@ -65,7 +69,18 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
-        slashLines = GetComponentsInChildren<LineRenderer>(true).ToList();
+        var lines = GetComponentsInChildren<LineRenderer>(true).ToList();
+        foreach (var line in lines)
+        {
+            if (line.CompareTag("Slash"))
+            {
+                slashLines.Add(line);
+            }
+            else if (line.CompareTag("Dodge"))
+            {
+                dodgeLines.Add(line);
+            }
+        }
         tapManager = GetComponentInChildren<TapManager>(true);
     }
 
@@ -99,21 +114,44 @@ public class GameManager : MonoBehaviour
             stopTimeTrack = 0;
             lastStop = touchPos;
 
+            playerOrigin = touchPos.y < Camera.main.pixelHeight * playerEnemyRatio;
+
+
             // slash start
             bool found = false;
-            foreach (var item in slashLines)
+            if (playerOrigin)
             {
-                if (!item.gameObject.activeSelf)
+                foreach (var item in dodgeLines)
                 {
-                    slashLine = item;
-                    found = true;
-                    break;
+                    if (!item.gameObject.activeSelf)
+                    {
+                        slashLine = item;
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found)
+                {
+                    slashLine = Instantiate(dodgePrefab).GetComponent<LineRenderer>();
+                    dodgeLines.Add(slashLine);
                 }
             }
-            if (!found)
+            else
             {
-                slashLine = Instantiate(slashPrefab).GetComponent<LineRenderer>();
-                slashLines.Add(slashLine);
+                foreach (var item in slashLines)
+                {
+                    if (!item.gameObject.activeSelf)
+                    {
+                        slashLine = item;
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found)
+                {
+                    slashLine = Instantiate(slashPrefab).GetComponent<LineRenderer>();
+                    slashLines.Add(slashLine);
+                }
             }
             slashLine.positionCount = 1;
             slashLine.SetPosition(slashLine.positionCount - 1, new Vector3(touchWorldPoint.x, touchWorldPoint.y, 0));
@@ -121,19 +159,12 @@ public class GameManager : MonoBehaviour
             slashOn = false;
             slashStart = false;
 
-            playerOrigin = touchPos.y < Camera.main.pixelHeight * playerEnemyRatio;
-
             // tap start
-            if (playerOrigin)
-            {
-                guardOn = true;
-            }
-            else
+            if (!playerOrigin)
             {
                 tapTimeTrack = 0;
                 tapConditions = true;
             }
-            
         }
         if (Input.GetMouseButton(0))
         {
@@ -178,21 +209,6 @@ public class GameManager : MonoBehaviour
             }
             else
             {
-                if ((touchPos - lastStop).magnitude < stopDistance)
-                {
-                    stopTimeTrack += Time.deltaTime;
-                    if (stopTimeTrack > stopTime)
-                    {
-                        slashOn = false;
-                        stopTimeTrack = 0;
-                    } 
-                }
-                else
-                {
-                    lastStop = touchPos;
-                    stopTimeTrack = 0;
-                }
-                
                 if (slashOn)
                 {
                     if (slashLine.positionCount > 0)
@@ -218,6 +234,32 @@ public class GameManager : MonoBehaviour
                         slashLine.positionCount += 1;
                         slashLine.SetPosition(slashLine.positionCount - 1, new Vector3(touchWorldPoint.x, touchWorldPoint.y, 0));
                     }
+                }
+
+                if ((touchPos - lastStop).magnitude < stopDistance)
+                {
+                    stopTimeTrack += Time.deltaTime;
+                    if (stopTimeTrack > stopTime)
+                    {
+                        slashOn = false;
+                        stopTimeTrack = 0;
+                    } 
+                }
+                else
+                {
+                    // speed control
+                    var borderX = extraX / 2;
+                    var borderY = extraY / 2;
+                    if (touchPos.x > borderX && touchPos.x < borderX + Camera.main.pixelWidth && touchPos.y > borderY && touchPos.y < borderY + Camera.main.pixelHeight)
+                    {
+                        Debug.Log(touchPos);
+                        lastStop = touchPos;
+                    }
+                    else
+                    {
+                        slashOn = false;
+                    }
+                    stopTimeTrack = 0;
                 }
             }
 
@@ -259,17 +301,60 @@ public class GameManager : MonoBehaviour
                 }
             }
         }
+        foreach (var item in dodgeLines)
+        {
+            if (item.gameObject.activeSelf && (item != slashLine || (!slashOn && slashStart)))
+            {
+                var color = item.endColor;
+                color.a -= fadeSpeed * Time.deltaTime;
+                if (color.a <= 0)
+                {
+                    item.gameObject.SetActive(false);
+                    color.a = 1;
+                    item.endColor = color;
+                }
+                else
+                {
+                    item.endColor = color;
+                }
+            }
+        }
 
         // Debug stuff
         debugObject.SetActive(debugOn);
-        var pos = new Vector3(0, (playerEnemyRatio * Camera.main.pixelHeight) + extraY/2, 1);
+        var width = Camera.main.pixelWidth;
+        var height = Camera.main.pixelHeight;
+        var xBorder = extraX / 2;
+        var yBorder = extraY / 2;
+
+        var pos = new Vector3(xBorder, (playerEnemyRatio * height) + yBorder, 1);
+        ratioLine.SetPosition(0, ScreenToWorld(pos));
+        pos.x = width + xBorder;
+        ratioLine.SetPosition(1, ScreenToWorld(pos));
+
+        /*pos.x = width * sideDodgeRatio + xBorder;
+        sideDodgeLineLeft.SetPosition(0, ScreenToWorld(pos));
+        pos.y = backDodgeRatio * height + yBorder;
+        sideDodgeLineLeft.SetPosition(1, ScreenToWorld(pos));
+
+        pos.x = width - (width * sideDodgeRatio) + xBorder;
+        sideDodgeLineRight.SetPosition(0, ScreenToWorld(pos));
+        pos.y = playerEnemyRatio * height + yBorder;
+        sideDodgeLineRight.SetPosition(1, ScreenToWorld(pos));
+
+        pos.x = xBorder;
+        pos.y = backDodgeRatio * height + yBorder;
+        backDodgeLine.SetPosition(0, ScreenToWorld(pos));
+        pos.x = width + xBorder;
+        backDodgeLine.SetPosition(1, ScreenToWorld(pos));*/
+    }
+
+    public Vector3 ScreenToWorld(Vector3 pos)
+    {
+        var z = pos.z;
         var worldPos = Camera.main.ScreenToWorldPoint(pos);
-        worldPos.z = 1;
-        ratioLine.SetPosition(0, worldPos);
-        pos.x = Camera.main.pixelWidth + extraX/2;
-        worldPos = Camera.main.ScreenToWorldPoint(pos);
-        worldPos.z = 1;
-        ratioLine.SetPosition(1, worldPos);
+        worldPos.z = z;
+        return worldPos;
     }
 
     public Vector2 GetTouchPos() // also sets touchPos. If there's no touch, gives the last touchPos
