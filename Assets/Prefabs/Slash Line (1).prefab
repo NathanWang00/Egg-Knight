@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &4401599262688410729
+--- !u!1 &2561298648122942574
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,36 +8,36 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 4401599262688410728}
-  - component: {fileID: 4401599262688410731}
+  - component: {fileID: 2561298648122942575}
+  - component: {fileID: 2561298648122942572}
   m_Layer: 0
-  m_Name: Dodge Line
-  m_TagString: Dodge
+  m_Name: Slash Line (1)
+  m_TagString: Slash
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 0
---- !u!4 &4401599262688410728
+--- !u!4 &2561298648122942575
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4401599262688410729}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.18045723, y: 0.29154122, z: -1.4065053}
+  m_GameObject: {fileID: 2561298648122942574}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!120 &4401599262688410731
+--- !u!120 &2561298648122942572
 LineRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4401599262688410729}
+  m_GameObject: {fileID: 2561298648122942574}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -70,7 +70,7 @@ LineRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: -10
   m_Positions: []
   m_Parameters:
     serializedVersion: 3
@@ -80,7 +80,7 @@ LineRenderer:
       m_Curve:
       - serializedVersion: 3
         time: 0
-        value: 0.49009705
+        value: 0.2562256
         inSlope: 0
         outSlope: 0
         tangentMode: 0
@@ -89,21 +89,21 @@ LineRenderer:
         outWeight: 0.33333334
       - serializedVersion: 3
         time: 1
-        value: 1
-        inSlope: 0.061193977
-        outSlope: 0.061193977
+        value: 0.24193573
+        inSlope: 0.0000024291558
+        outSlope: 0.0000024291558
         tangentMode: 0
         weightedMode: 0
-        inWeight: 0.6666666
+        inWeight: 0.104283035
         outWeight: 0
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
     colorGradient:
       serializedVersion: 2
-      key0: {r: 0.39208794, g: 0.9339623, b: 0.47654587, a: 0}
-      key1: {r: 0.28727365, g: 0.24857599, b: 0.9245283, a: 1}
-      key2: {r: 0, g: 0, b: 0, a: 0}
+      key0: {r: 1, g: 0.6023967, b: 0.5707547, a: 0.34509805}
+      key1: {r: 1, g: 0.6023967, b: 0.5707547, a: 0.34509805}
+      key2: {r: 0, g: 0, b: 0, a: 1}
       key3: {r: 0, g: 0, b: 0, a: 0}
       key4: {r: 0, g: 0, b: 0, a: 0}
       key5: {r: 0, g: 0, b: 0, a: 0}
@@ -118,8 +118,8 @@ LineRenderer:
       ctime6: 0
       ctime7: 0
       atime0: 0
-      atime1: 17733
-      atime2: 0
+      atime1: 65535
+      atime2: 17733
       atime3: 0
       atime4: 0
       atime5: 0
@@ -128,8 +128,8 @@ LineRenderer:
       m_Mode: 0
       m_NumColorKeys: 2
       m_NumAlphaKeys: 2
-    numCornerVertices: 5
-    numCapVertices: 1
+    numCornerVertices: 0
+    numCapVertices: 0
     alignment: 0
     textureMode: 0
     shadowBias: 0.5

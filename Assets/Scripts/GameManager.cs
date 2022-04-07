@@ -20,18 +20,20 @@ public class GameManager : MonoBehaviour
     [SerializeField] protected Camera letterboxCam;
     [SerializeField] protected CanvasScaler canvasScaler;
     protected float extraX = 0, extraY = 0;
-
+    
     [Header("Attack Controls")]
     [SerializeField] protected float startRadius = 8;
     [SerializeField] protected float stopDistance = 10;
     [SerializeField] protected float stopTime = 1;
     [SerializeField] protected float tapTime = 0.1f;
+    [SerializeField] protected float stabTime = 0.5f;
+    [SerializeField] protected float slashTime = 0.5f;
     [SerializeField] [Range(0f, 1f)] protected float playerEnemyRatio = 0.5f;
     //[SerializeField] [Range(0f, 1f)] protected float backDodgeRatio = 0.1f;
     //[SerializeField] [Range(0f, 0.5f)] protected float sideDodgeRatio = 0.33f;
-    protected float initialAngle, currentAngle, stopTimeTrack, tapTimeTrack;
+    protected float initialAngle, currentAngle, stopTimeTrack, holdTimeTrack, attackTimeTrack;
     protected Vector2 initialPos, touchPos, touchWorldPoint, lastTouch, currentVelo, lastStop;
-    protected bool slashOn = false, slashStart = false, playerOrigin = false, tapConditions = false;
+    protected bool slashOn = false, slashStart = false, playerOrigin = false, tapConditions = false, stabAnimating = false;
 
     [Header("Slash Graphics")]
     [SerializeField] protected float minLineChange = 0.1f;
@@ -45,7 +47,13 @@ public class GameManager : MonoBehaviour
     protected List<LineRenderer> dodgeLines = new List<LineRenderer>();
 
     [Header("Player Controls")]
-    protected bool guardOn = false;
+    [SerializeField] protected float sideDodgeAngle = 90;
+    [SerializeField] protected float dodgeStopTime = 3;
+    [SerializeField] protected float guardTime = 0.5f;
+    [SerializeField] protected float minDodgeTime = 1;
+    protected float dodgeTimeTrack = 0;
+    protected bool dodgeOn = false, guardOn = false;
+    protected Player player;
 
     protected TapManager tapManager;
 
@@ -82,6 +90,7 @@ public class GameManager : MonoBehaviour
             }
         }
         tapManager = GetComponentInChildren<TapManager>(true);
+        player = FindObjectOfType<Player>();
     }
 
     private void Update()
@@ -152,18 +161,21 @@ public class GameManager : MonoBehaviour
                     slashLine = Instantiate(slashPrefab).GetComponent<LineRenderer>();
                     slashLines.Add(slashLine);
                 }
+                player.Windup();
             }
             slashLine.positionCount = 1;
-            slashLine.SetPosition(slashLine.positionCount - 1, new Vector3(touchWorldPoint.x, touchWorldPoint.y, 0));
+            slashLine.SetPosition(0, new Vector3(touchWorldPoint.x, touchWorldPoint.y, 0));
             slashLine.gameObject.SetActive(true);
             slashOn = false;
             slashStart = false;
 
-            // tap start
-            if (!playerOrigin)
+            holdTimeTrack = -Time.deltaTime;
+            tapConditions = true;
+
+            if (dodgeOn)
             {
-                tapTimeTrack = 0;
-                tapConditions = true;
+                dodgeOn = false;
+                player.Move(Player.Area.Center);
             }
         }
         if (Input.GetMouseButton(0))
@@ -180,66 +192,98 @@ public class GameManager : MonoBehaviour
             {
                 if ((touchPos - initialPos).magnitude > startRadius && !slashStart)
                 {
+                    // where slash is turned on
                     currentVelo = touchPos - lastTouch;
                     currentAngle = Mathf.Rad2Deg * Mathf.Atan2(currentVelo.y, currentVelo.x);
                     initialAngle = currentAngle;
                     slashStart = true;
                     slashOn = true;
                     tapConditions = false;
+                    if (playerOrigin)
+                    {
+                        dodgeOn = true;
+                        dodgeTimeTrack = 0;
+                    }
+                    else
+                    {
+                        player.Slash(); // activate this on hit or miss instead?
+                    }
                 }
                 else
                 {
-                    if (tapConditions)
+                    holdTimeTrack += Time.deltaTime;
+                    if (holdTimeTrack > tapTime)
                     {
-                        if (tapTimeTrack == 0)
+                        tapConditions = false;
+                    }
+                    if (holdTimeTrack > guardTime && playerOrigin && !slashStart)
+                    {
+                        if (dodgeOn)
                         {
-                            // lazy solution so that Time.deltaTime won't be added when it's 0
-                            tapTimeTrack = 0.0001f;
+                            dodgeOn = false;
+                            player.Move(Player.Area.Center);
                         }
-                        else
-                        {
-                            tapTimeTrack += Time.deltaTime;
-                            if (tapTimeTrack > tapTime)
-                            {
-                                tapConditions = false;
-                            }
-                        }
+                        guardOn = true;
+                        player.Guard();
                     }
                 }
             }
             else
             {
-                if (slashOn)
+                if (slashLine.positionCount > 0)
                 {
-                    if (slashLine.positionCount > 0)
+                    // check min distance
+                    Vector2 lastNode = slashLine.GetPosition(slashLine.positionCount - 1);
+                    if ((lastNode - touchWorldPoint).magnitude > minLineChange)
                     {
-                        Vector2 lastNode = slashLine.GetPosition(slashLine.positionCount - 1);
-                        if ((lastNode - touchWorldPoint).magnitude > minLineChange)
+                        // compare to original angle
+                        currentVelo = touchWorldPoint - lastNode;
+                        currentAngle = Mathf.Rad2Deg * Mathf.Atan2(currentVelo.y, currentVelo.x);
+                        if (Mathf.Abs(Mathf.DeltaAngle(currentAngle, initialAngle)) > 85)
                         {
-                            currentVelo = touchWorldPoint - lastNode;
-                            currentAngle = Mathf.Rad2Deg * Mathf.Atan2(currentVelo.y, currentVelo.x);
-                            if (Mathf.Abs(Mathf.DeltaAngle(currentAngle, initialAngle)) > 85)
-                            {
-                                slashOn = false;
-                            }
-                            else
-                            {
-                                slashLine.positionCount += 1;
-                                slashLine.SetPosition(slashLine.positionCount - 1, new Vector3(touchWorldPoint.x, touchWorldPoint.y, 0));
-                            }
+                            slashOn = false;
                         }
+                        else
+                        {
+                            slashLine.positionCount += 1;
+                            slashLine.SetPosition(slashLine.positionCount - 1, new Vector3(touchWorldPoint.x, touchWorldPoint.y, 0));
+                        }
+                    }
+                }
+                else
+                {
+                    slashLine.positionCount += 1;
+                    slashLine.SetPosition(slashLine.positionCount - 1, new Vector3(touchWorldPoint.x, touchWorldPoint.y, 0));
+                }
+
+                // dodge directions
+                if (playerOrigin)
+                {
+                    if (Mathf.Abs(Mathf.DeltaAngle(0, initialAngle)) <= sideDodgeAngle || (initialAngle > sideDodgeAngle && initialAngle <= 90))
+                    {
+                        player.Move(Player.Area.Right);
+                    }
+                    else if (Mathf.Abs(Mathf.DeltaAngle(180, initialAngle)) <= sideDodgeAngle || (initialAngle <= 180 && initialAngle >= 90))
+                    {
+                        player.Move(Player.Area.Left);
+                    } 
+                    else if (initialAngle < 0)
+                    {
+                        player.Move(Player.Area.Back);
                     }
                     else
                     {
-                        slashLine.positionCount += 1;
-                        slashLine.SetPosition(slashLine.positionCount - 1, new Vector3(touchWorldPoint.x, touchWorldPoint.y, 0));
+                        Debug.Log("Unknown dodge angle " + initialAngle);
                     }
+                    dodgeTimeTrack += Time.deltaTime;
                 }
 
+                // stop conditions
                 if ((touchPos - lastStop).magnitude < stopDistance)
                 {
+                    // tracking if too slow
                     stopTimeTrack += Time.deltaTime;
-                    if (stopTimeTrack > stopTime)
+                    if ((!playerOrigin && stopTimeTrack > stopTime) || (playerOrigin && stopTimeTrack > dodgeStopTime))
                     {
                         slashOn = false;
                         stopTimeTrack = 0;
@@ -247,12 +291,11 @@ public class GameManager : MonoBehaviour
                 }
                 else
                 {
-                    // speed control
+                    // out of bounds
                     var borderX = extraX / 2;
                     var borderY = extraY / 2;
                     if (touchPos.x > borderX && touchPos.x < borderX + Camera.main.pixelWidth && touchPos.y > borderY && touchPos.y < borderY + Camera.main.pixelHeight)
                     {
-                        Debug.Log(touchPos);
                         lastStop = touchPos;
                     }
                     else
@@ -260,6 +303,12 @@ public class GameManager : MonoBehaviour
                         slashOn = false;
                     }
                     stopTimeTrack = 0;
+                }
+
+                if (playerOrigin && !slashOn && dodgeTimeTrack >= minDodgeTime)
+                {
+                    player.Move(Player.Area.Center);
+                    dodgeOn = false;
                 }
             }
 
@@ -273,14 +322,48 @@ public class GameManager : MonoBehaviour
         {
             slashLine = null;
         }
+
         if (Input.GetMouseButtonUp(0))
         {
-            if (tapConditions)
+            slashOn = false;
+            if (tapConditions && !playerOrigin)
             {
                 tapManager.StartTap(touchWorldPoint);
+                player.Stab();
+                stabAnimating = true;
+                attackTimeTrack = -Time.deltaTime;
             }
-            slashOn = false;
-            guardOn = false;
+            else if (!playerOrigin)
+            {
+                player.Move(Player.Area.Center);
+            }
+            if (guardOn)
+            {
+                guardOn = false;
+                player.Move(Player.Area.Center);
+            }
+        }
+
+        if (dodgeOn && !slashOn)
+        {
+            if (dodgeTimeTrack >= minDodgeTime)
+            {
+                dodgeOn = false;
+                player.Move(Player.Area.Center);
+            } 
+            else
+            {
+                dodgeTimeTrack += Time.deltaTime;
+            }
+        }
+
+        if (stabAnimating && player.GetState() == Player.States.Stab)
+        {
+            attackTimeTrack += Time.deltaTime;
+            if (attackTimeTrack > stabTime)
+            {
+                player.Move(Player.Area.Center);
+            }
         }
 
         foreach (var item in slashLines)

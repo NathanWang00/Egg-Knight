@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Slash
   - Dodge
+  - Preslash
   layers:
   - Default
   - TransparentFX
