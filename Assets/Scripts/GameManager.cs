@@ -32,7 +32,7 @@ public class GameManager : MonoBehaviour
     //[SerializeField] [Range(0f, 1f)] protected float backDodgeRatio = 0.1f;
     //[SerializeField] [Range(0f, 0.5f)] protected float sideDodgeRatio = 0.33f;
     protected float initialAngle, currentAngle, stopTimeTrack, holdTimeTrack, attackTimeTrack;
-    protected Vector2 initialPos, touchPos, touchWorldPoint, lastTouch, currentVelo, lastStop;
+    protected Vector2 initialPos, initialWorldPoint, touchPos, touchWorldPoint, lastTouch, currentVelo, lastStop;
     protected bool slashOn = false, slashStart = false, playerOrigin = false, tapConditions = false, stabAnimating = false, slashAnimating = false;
 
     [Header("Slash Graphics")]
@@ -109,15 +109,18 @@ public class GameManager : MonoBehaviour
             if (camRatio > 0.57)
             {
                 extraX = camDimensions.x - (camDimensions.y * 9 / 16);
+                extraY = 0;
             }
             if (camRatio < 0.56)
             {
                 extraY = camDimensions.y - (camDimensions.x * 16 / 9);
+                extraX = 0;
                 canvasScaler.matchWidthOrHeight = 0;
             }
             else
             {
                 canvasScaler.matchWidthOrHeight = 1;
+                extraY = 0;
             }
         }
 
@@ -125,6 +128,7 @@ public class GameManager : MonoBehaviour
         {
             // position tracking
             initialPos = GetTouchPos();
+            initialWorldPoint = Camera.main.ScreenToWorldPoint(initialPos);
             initialAngle = 0;
             lastTouch = touchPos;
             stopTimeTrack = 0;
@@ -199,13 +203,20 @@ public class GameManager : MonoBehaviour
                 player.Move(Player.Area.Center);
             }
 
+            // activate double tap
             if (doubleTapConditions)
             {
                 guardOn = true;
                 player.Guard();
             }
-
             doubleTapConditions = false;
+
+            // start double tap conditions
+            if (playerOrigin)
+            {
+                doubleTapConditions = true;
+                doubleTapTrack = -Time.deltaTime;
+            }
         }
         if (Input.GetMouseButton(0))
         {
@@ -363,12 +374,19 @@ public class GameManager : MonoBehaviour
         {
             if (tapConditions && !playerOrigin)
             {
+                // Stab stuff
                 tapManager.StartTap(touchWorldPoint);
 
                 // animation stuff
                 player.Stab();
                 stabAnimating = true;
                 attackTimeTrack = -Time.deltaTime;
+
+                // detection stuff
+                LayerMask mask = LayerMask.GetMask("EnemyHurtbox", "WeakpointHurtbox");
+                float radius = 1;
+                Debug.DrawRay(touchWorldPoint - Vector2.right * radius, Vector2.right * 2 * radius, Color.green, 0.7f);
+                Debug.Log(Physics2D.OverlapCircleAll(touchWorldPoint, radius, mask).Length);
             }
             else if (!playerOrigin)
             {
@@ -399,17 +417,27 @@ public class GameManager : MonoBehaviour
                     slashLine.SetPosition(0, preslashLine.GetPosition(0));
                     slashLine.SetPosition(1, preslashLine.GetPosition(1));
                     slashLine.gameObject.SetActive(true);
+
+                    LayerMask mask = LayerMask.GetMask("EnemyHurtbox", "WeakpointHurtbox");
+
+                    // detection stuff
+                    RaycastHit2D[] hit = Physics2D.LinecastAll(initialWorldPoint, touchWorldPoint, mask);
+                    Debug.Log(hit.Length);
+
+                    mask = LayerMask.GetMask("EnemyHurtbox");
+                    RaycastHit2D inside = Physics2D.Raycast(touchWorldPoint, Vector2.zero, 20.0f, mask);
+                    if (inside)
+                    {
+                        Debug.Log(inside.collider.name);
+                    }
                 }
                 preslashLine.positionCount = 0;
             }
             slashOn = false;
-            
-            // double tap
-            if (playerOrigin && !slashStart && !guardOn)
+
+            if (slashStart || guardOn)
             {
-                doubleTapConditions = true;
-                doubleTapTrack = -Time.deltaTime;
-                Debug.Log(doubleTapConditions);
+                doubleTapConditions = false;
             }
 
             if (guardOn)
@@ -450,6 +478,15 @@ public class GameManager : MonoBehaviour
             }
         }
 
+        if (doubleTapConditions && !Input.GetMouseButtonDown(0))
+        {
+            doubleTapTrack += Time.deltaTime;
+            if (doubleTapTrack >= doubleTapGuard)
+            {
+                doubleTapConditions = false;
+            }
+        }
+
         // Debug stuff
         debugObject.SetActive(debugOn);
         var width = Camera.main.pixelWidth;
@@ -487,25 +524,30 @@ public class GameManager : MonoBehaviour
             if (item.gameObject.activeSelf)
             {
                 var color = item.endColor;
+                var startColor = item.startColor;
                 if (color.a > 0.95)
                 {
                     color.a -= 0.05f * slashDelayFade;
+                    startColor.a -= 0.05f * slashDelayFade;
                 }
                 else
                 {
                     color.a -= fadeSpeed;
+                    startColor.a -= fadeSpeed;
                 }
                 if (color.a <= 0)
                 {
                     item.gameObject.SetActive(false);
                     color.a = 1;
+                    startColor.a = 0.5f;
                     item.endColor = color;
+                    item.startColor = startColor;
                 }
                 else
                 {
                     item.endColor = color;
+                    item.startColor = startColor;
                 }
-                Debug.Log(color.a);
             }
         }
         foreach (var item in dodgeLines)
