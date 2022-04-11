@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using PowerTools;
 
-public class Player : MonoBehaviour
+public class Player : Character
 {
     [Header("Animations")]
     [SerializeField] AnimationClip idleAnim;
@@ -14,7 +14,6 @@ public class Player : MonoBehaviour
     [SerializeField] AnimationClip windupAnim;
     [SerializeField] AnimationClip stabAnim;
     [SerializeField] AnimationClip slashAnim;
-    protected SpriteAnim spriteAnim;
 
     public enum States
     {
@@ -39,11 +38,6 @@ public class Player : MonoBehaviour
     protected States state = States.Idle;
     protected Area area = Area.Center;
     protected bool actionable = true, guarding = false;
-
-    private void Awake()
-    {
-        spriteAnim = GetComponent<SpriteAnim>();
-    }
 
     public States GetState()
     {

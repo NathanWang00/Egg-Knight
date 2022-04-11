@@ -12,6 +12,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] protected GameObject debugObject;
     [SerializeField] protected TextMeshProUGUI vectorText;
     [SerializeField] protected LineRenderer ratioLine;
+    [HideInInspector] public int lastDamage = 0; 
     //[SerializeField] protected LineRenderer sideDodgeLineLeft;
     //[SerializeField] protected LineRenderer sideDodgeLineRight;
     //[SerializeField] protected LineRenderer backDodgeLine;
@@ -28,6 +29,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] protected float tapTime = 0.1f;
     [SerializeField] protected float stabTime = 0.5f;
     [SerializeField] protected float slashTime = 0.5f;
+    [SerializeField] protected float stabRadius = 0.5f;
     [SerializeField] [Range(0f, 1f)] protected float playerEnemyRatio = 0.5f;
     //[SerializeField] [Range(0f, 1f)] protected float backDodgeRatio = 0.1f;
     //[SerializeField] [Range(0f, 0.5f)] protected float sideDodgeRatio = 0.33f;
@@ -57,6 +59,10 @@ public class GameManager : MonoBehaviour
     protected float dodgeTimeTrack = 0, doubleTapTrack = 0;
     protected bool dodgeOn = false, guardOn = false, doubleTapConditions = false;
     protected Player player;
+
+    [Header("Player Damage")]
+    [SerializeField] protected int stabDamage = 70;
+    [SerializeField] protected int slashDamage = 120;
 
     protected TapManager tapManager;
 
@@ -362,7 +368,7 @@ public class GameManager : MonoBehaviour
             // debug stuff
             if (Input.GetMouseButton(0))
             {
-                vectorText.text = "Touch Vector: " + touchPos + "\n" + "Touch Velo: " + currentVelo + "\n" + "Angle: " + currentAngle;
+                vectorText.text = "Touch Vector: " + touchPos + "\n" + "Touch Velo: " + currentVelo + "\n" + "Angle: " + currentAngle + "\n" + "Last Damage: " + lastDamage;
             }
         }
         else
@@ -382,11 +388,8 @@ public class GameManager : MonoBehaviour
                 stabAnimating = true;
                 attackTimeTrack = -Time.deltaTime;
 
-                // detection stuff
-                LayerMask mask = LayerMask.GetMask("EnemyHurtbox", "WeakpointHurtbox");
-                float radius = 1;
-                Debug.DrawRay(touchWorldPoint - Vector2.right * radius, Vector2.right * 2 * radius, Color.green, 0.7f);
-                Debug.Log(Physics2D.OverlapCircleAll(touchWorldPoint, radius, mask).Length);
+                // get enemies hit
+                Stab(touchWorldPoint);
             }
             else if (!playerOrigin)
             {
@@ -418,21 +421,16 @@ public class GameManager : MonoBehaviour
                     slashLine.SetPosition(1, preslashLine.GetPosition(1));
                     slashLine.gameObject.SetActive(true);
 
-                    LayerMask mask = LayerMask.GetMask("EnemyHurtbox", "WeakpointHurtbox");
-
                     // detection stuff
-                    RaycastHit2D[] hit = Physics2D.LinecastAll(initialWorldPoint, touchWorldPoint, mask);
-                    Debug.Log(hit.Length);
-
-                    mask = LayerMask.GetMask("EnemyHurtbox");
-                    RaycastHit2D inside = Physics2D.Raycast(touchWorldPoint, Vector2.zero, 20.0f, mask);
-                    if (inside)
-                    {
-                        Debug.Log(inside.collider.name);
-                    }
+                    Slash(initialWorldPoint, touchWorldPoint);
                 }
                 preslashLine.positionCount = 0;
             }
+            if (!playerOrigin && !tapConditions && !slashOn)
+            {
+                player.Move(Player.Area.Center);
+            }
+
             slashOn = false;
 
             if (slashStart || guardOn)
@@ -568,6 +566,98 @@ public class GameManager : MonoBehaviour
                 }
             }
         }
+    }
+
+    protected void Stab(Vector2 pos)
+    {
+        LayerMask mask = LayerMask.GetMask("EnemyHurtbox");
+        List<Enemy> enemiesHit = new List<Enemy>();
+        foreach (var collider in Physics2D.OverlapCircleAll(pos, stabRadius, mask))
+        {
+            var enemy = collider.transform.root.GetComponent<Enemy>();
+            if (enemy != null && !enemiesHit.Contains(enemy))
+            {
+                enemiesHit.Add(enemy);
+                enemy.ResetWeakpoints();
+            }
+        }
+
+        // get amount of weakpoints hit
+        mask = LayerMask.GetMask("WeakpointHurtbox");
+        foreach (var collider in Physics2D.OverlapCircleAll(pos, stabRadius, mask))
+        {
+            var enemy = collider.transform.root.GetComponent<Enemy>();
+            if (enemy != null)
+            {
+                enemy.WeakpointHit(1);
+            }
+        }
+
+        // apply damage to enemy
+        foreach (var enemy in enemiesHit)
+        {
+            HurtEnemy(enemy, stabDamage, enemy.GetWeakpointsHit(), false);
+            enemy.ResetWeakpoints();
+        }
+    }
+
+    protected void Slash(Vector2 start, Vector2 destination)
+    {
+        LayerMask mask = LayerMask.GetMask("EnemyHurtbox");
+        List<Enemy> enemiesHit = new List<Enemy>();
+        foreach (var hit in Physics2D.LinecastAll(start, destination, mask))
+        {
+            var enemy = hit.transform.root.GetComponent<Enemy>();
+            if (enemy != null && !enemiesHit.Contains(enemy))
+            {
+                enemiesHit.Add(enemy);
+                enemy.ResetWeakpoints();
+                enemy.FullSlashed(true);
+            }
+        }
+
+        // get amount of weakpoints hit
+        mask = LayerMask.GetMask("WeakpointHurtbox");
+        foreach (var hit in Physics2D.LinecastAll(start, destination, mask))
+        {
+            var enemy = hit.transform.root.GetComponent<Enemy>();
+            if (enemy != null)
+            {
+                enemy.WeakpointHit(1);
+            }
+        }
+
+        // check if it was a full slash
+        mask = LayerMask.GetMask("EnemyHurtbox");
+        foreach (var hit in Physics2D.RaycastAll(start, Vector2.zero, 20.0f, mask))
+        {
+            var enemy = hit.transform.root.GetComponent<Enemy>();
+            if (enemy != null)
+            {
+                enemy.FullSlashed(false);
+            }
+        }
+        foreach (var hit in Physics2D.RaycastAll(destination, Vector2.zero, 20.0f, mask))
+        {
+            var enemy = hit.transform.root.GetComponent<Enemy>();
+            if (enemy != null)
+            {
+                enemy.FullSlashed(false);
+            }
+        }
+
+        // apply damage to enemy
+        foreach (var enemy in enemiesHit)
+        {
+            HurtEnemy(enemy, slashDamage, enemy.GetWeakpointsHit(), enemy.GetSlash());
+            enemy.ResetWeakpoints();
+            enemy.FullSlashed(true);
+        }
+    }
+
+    protected void HurtEnemy(Enemy enemy, float damage, int weakpoint, bool fullSlash)
+    {
+        enemy.Hurt(damage, weakpoint, fullSlash);
     }
 
     public Vector3 ScreenToWorld(Vector3 pos)
