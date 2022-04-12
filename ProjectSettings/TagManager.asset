@@ -44,3 +44,21 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
+  - name: Enemy
+    uniqueID: 2335136343
+    locked: 0
+  - name: Player
+    uniqueID: 2923556633
+    locked: 0
+  - name: PreattackLine
+    uniqueID: 3737058361
+    locked: 0
+  - name: AttackLine
+    uniqueID: 373922323
+    locked: 0
+  - name: EnemyAttack
+    uniqueID: 2050346391
+    locked: 0
+  - name: DefenseLine
+    uniqueID: 1877240425
+    locked: 0

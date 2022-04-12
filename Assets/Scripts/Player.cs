@@ -3,6 +3,14 @@ using System.Collections.Generic;
 using UnityEngine;
 using PowerTools;
 
+public enum Area
+{
+    Center,
+    Left,
+    Right,
+    Back
+}
+
 public class Player : Character
 {
     [Header("Animations")]
@@ -26,14 +34,6 @@ public class Player : Character
         Slash
     }
 
-    public enum Area
-    {
-        Center,
-        Left,
-        Right,
-        Back
-    }
-
     [Header("State Logic")]
     protected States state = States.Idle;
     protected Area area = Area.Center;
@@ -47,6 +47,14 @@ public class Player : Character
     public Area GetArea()
     {
         return area;
+    }
+
+    public virtual void Hurt(float damage, Area attackArea)
+    {
+        if (area == attackArea)
+        {
+            Hurt(damage);
+        }
     }
 
     public void Guard()

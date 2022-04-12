@@ -206,7 +206,7 @@ public class GameManager : MonoBehaviour
             if (dodgeOn)
             {
                 dodgeOn = false;
-                player.Move(Player.Area.Center);
+                player.Move(Area.Center);
             }
 
             // activate double tap
@@ -263,7 +263,7 @@ public class GameManager : MonoBehaviour
                         if (dodgeOn)
                         {
                             dodgeOn = false;
-                            player.Move(Player.Area.Center);
+                            player.Move(Area.Center);
                         }
                         guardOn = true;
                         player.Guard();
@@ -311,15 +311,15 @@ public class GameManager : MonoBehaviour
                 {
                     if (Mathf.Abs(Mathf.DeltaAngle(0, initialAngle)) <= sideDodgeAngle || (initialAngle > sideDodgeAngle && initialAngle <= 90))
                     {
-                        player.Move(Player.Area.Right);
+                        player.Move(Area.Right);
                     }
                     else if (Mathf.Abs(Mathf.DeltaAngle(180, initialAngle)) <= sideDodgeAngle || (initialAngle <= 180 && initialAngle >= 90))
                     {
-                        player.Move(Player.Area.Left);
+                        player.Move(Area.Left);
                     } 
                     else if (initialAngle < 0)
                     {
-                        player.Move(Player.Area.Back);
+                        player.Move(Area.Back);
                     }
                     else
                     {
@@ -360,7 +360,7 @@ public class GameManager : MonoBehaviour
 
                 if (playerOrigin && !slashOn && dodgeTimeTrack >= minDodgeTime)
                 {
-                    player.Move(Player.Area.Center);
+                    player.Move(Area.Center);
                     dodgeOn = false;
                 }
             }
@@ -428,7 +428,7 @@ public class GameManager : MonoBehaviour
             }
             if (!playerOrigin && !tapConditions && !slashOn)
             {
-                player.Move(Player.Area.Center);
+                player.Move(Area.Center);
             }
 
             slashOn = false;
@@ -441,7 +441,7 @@ public class GameManager : MonoBehaviour
             if (guardOn)
             {
                 guardOn = false;
-                player.Move(Player.Area.Center);
+                player.Move(Area.Center);
             }
         }
 
@@ -450,7 +450,7 @@ public class GameManager : MonoBehaviour
             if (dodgeTimeTrack >= minDodgeTime)
             {
                 dodgeOn = false;
-                player.Move(Player.Area.Center);
+                player.Move(Area.Center);
             } 
             else
             {
@@ -463,7 +463,7 @@ public class GameManager : MonoBehaviour
             attackTimeTrack += Time.deltaTime;
             if (attackTimeTrack >= stabTime)
             {
-                player.Move(Player.Area.Center);
+                player.Move(Area.Center);
             }
         }
 
@@ -472,7 +472,7 @@ public class GameManager : MonoBehaviour
             attackTimeTrack += Time.deltaTime;
             if (attackTimeTrack >= slashTime)
             {
-                player.Move(Player.Area.Center);
+                player.Move(Area.Center);
             }
         }
 
@@ -653,6 +653,12 @@ public class GameManager : MonoBehaviour
             enemy.ResetWeakpoints();
             enemy.FullSlashed(true);
         }
+    }
+
+    public void AttackPlayer(float damage, Area area)
+    {
+        var testArea = area;
+        player.Hurt(damage, testArea);
     }
 
     protected void HurtEnemy(Enemy enemy, float damage, int weakpoint, bool fullSlash)

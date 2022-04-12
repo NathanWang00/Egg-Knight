@@ -50,6 +50,7 @@ public class Character : MonoBehaviour
         var dmg = damage;
         int intDmg = Mathf.RoundToInt(dmg);
 
+        // add damage variance
         Debug.Log(intDmg);
         GameManager.Instance.lastDamage = intDmg;
 

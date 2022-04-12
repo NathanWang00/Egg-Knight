@@ -523,7 +523,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_AdditionalShaderChannelsFlag: 25
-  m_SortingLayerID: 0
+  m_SortingLayerID: -1371410663
   m_SortingOrder: 0
   m_TargetDisplay: 0
 --- !u!224 &651120429
@@ -841,7 +841,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21de61448262c394d961e54508c4846e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  health: 0
+  health: 300
   idleAnim: {fileID: 7400000, guid: c5991000033257b4b966420a4dbbe976, type: 2}
   leftDodgeAnim: {fileID: 7400000, guid: 57c96320ef15fd34592e9340c4a8f7ff, type: 2}
   rightDodgeAnim: {fileID: 7400000, guid: f246c64a8acc04b4ea6a1dbe0a2ea4f4, type: 2}
@@ -1337,7 +1337,9 @@ GameObject:
   m_Component:
   - component: {fileID: 1809116282}
   - component: {fileID: 1809116281}
+  - component: {fileID: 1809116285}
   - component: {fileID: 1809116283}
+  - component: {fileID: 1809116284}
   m_Layer: 0
   m_Name: Test Dummy
   m_TagString: Untagged
@@ -1382,8 +1384,8 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: -1959830953
+  m_SortingLayer: 1
   m_SortingOrder: -20
   m_Sprite: {fileID: 21300000, guid: 7973395791b4a1345b10bc38311b8d9b, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -1404,7 +1406,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1809116280}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.33, y: -1.01, z: 0}
+  m_LocalPosition: {x: 0.26, y: -1.05, z: 0}
   m_LocalScale: {x: 0.81304616, y: 0.81304616, z: 0.81304616}
   m_Children:
   - {fileID: 33323714}
@@ -1421,10 +1423,48 @@ MonoBehaviour:
   m_GameObject: {fileID: 1809116280}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0b32746955f733845adb411b6ba9d0da, type: 3}
+  m_Script: {fileID: 11500000, guid: 21b29ecd0ee0ec648aef541fbab609fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   health: 999999
+  attackArray:
+  - damage: 50
+    animation: {fileID: 7400000, guid: afc7bc7d43a529040b38c9203fd05e74, type: 2}
+    areas: 0000000003000000
+  idle: {fileID: 7400000, guid: e820899591f241e40972222acd68d775, type: 2}
+  attackDelay: 2
+--- !u!114 &1809116284
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1809116280}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 89a8ca009b14008429f621808bba2086, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_defaultAnim: {fileID: 7400000, guid: e820899591f241e40972222acd68d775, type: 2}
+--- !u!95 &1809116285
+Animator:
+  serializedVersion: 3
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1809116280}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 11fface1e050c1d4ca711f205b2534b0, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorControllerStateOnDisable: 0
 --- !u!1 &1829588625
 GameObject:
   m_ObjectHideFlags: 0
@@ -1543,7 +1583,7 @@ MonoBehaviour:
   stabTime: 0.3
   slashTime: 0.5
   stabRadius: 0.1
-  playerEnemyRatio: 0.194
+  playerEnemyRatio: 0.31
   minLineChange: 0.08
   slashDelayFade: 0.08
   fadeSpeed: 0.1
