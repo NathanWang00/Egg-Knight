@@ -32,6 +32,7 @@ public class Enemy : Character
         base.Awake();
         originalMat = spriteRenderer.material;
         hurtMat.SetFloat("_FlashAmount", defaultFlash);
+        attackMat.SetFloat("_FlashAmount", defaultFlash);
     }
 
     protected virtual void Update()
