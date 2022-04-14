@@ -4,21 +4,9 @@ using UnityEngine;
 
 public class BasicMelee : Enemy
 {
-    [Header("Specific Attack Stuff")]
-    [SerializeField] protected float attackDelay;
-    protected float attackTimeTrack = 0;
-    // add variance
 
-    protected void Update()
+    protected override void Update()
     {
-        if (!attacking)
-        {
-            attackTimeTrack += Time.deltaTime;
-            if (attackTimeTrack > attackDelay)
-            {
-                AttackStart();
-                attackTimeTrack = 0;
-            }
-        }
+        base.Update();
     }
 }

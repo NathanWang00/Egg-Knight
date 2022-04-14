@@ -63,6 +63,7 @@ public class GameManager : MonoBehaviour
     [Header("Player Damage")]
     [SerializeField] protected int stabDamage = 70;
     [SerializeField] protected int slashDamage = 120;
+    public static float damageVariance = 0.1f;
 
     protected TapManager tapManager;
 
@@ -165,8 +166,9 @@ public class GameManager : MonoBehaviour
                     slashLine = Instantiate(dodgePrefab).GetComponent<LineRenderer>();
                     dodgeLines.Add(slashLine);
                 }
-                slashLine.positionCount = 1;
+                slashLine.positionCount = 2;
                 slashLine.SetPosition(0, new Vector3(touchWorldPoint.x, touchWorldPoint.y, 0));
+                slashLine.SetPosition(1, new Vector3(touchWorldPoint.x, touchWorldPoint.y, 0));
                 slashLine.gameObject.SetActive(true);
             }
             else

@@ -43,15 +43,13 @@ public class Character : MonoBehaviour
         Hurt(dmg);
     }
 
-
-    // For player
     public virtual void Hurt(float damage)
     {
         var dmg = damage;
+        dmg += Random.Range(-GameManager.damageVariance / 2, GameManager.damageVariance / 2) * dmg;
         int intDmg = Mathf.RoundToInt(dmg);
 
-        // add damage variance
-        Debug.Log(intDmg);
+        // for debug
         GameManager.Instance.lastDamage = intDmg;
 
         health -= intDmg;

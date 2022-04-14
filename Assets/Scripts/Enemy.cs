@@ -9,12 +9,18 @@ public class Enemy : Character
 {
     [Header ("Attack Stuff")]
     [SerializeField] protected Attack[] attackArray;
+    [SerializeField] protected float attackDelay;
     protected int attackIndex = 0;
     protected bool attacking = false;
+    protected float attackTimeTrack = 0;
 
     [Header("Animations")]
     [SerializeField] protected AnimationClip idle;
+    [SerializeField] protected Material hurtMat, attackMat;
+    protected static float flashTime = 0.4f, defaultFlash = 0.7f;
     protected SpriteRenderer spriteRenderer;
+    protected float flashTracker = 0;
+    protected Material originalMat;
 
     // Damage receive stuff
     protected int weakpointsHit = 0;
@@ -24,6 +30,33 @@ public class Enemy : Character
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
         base.Awake();
+        originalMat = spriteRenderer.material;
+        hurtMat.SetFloat("_FlashAmount", defaultFlash);
+    }
+
+    protected virtual void Update()
+    {
+        if (!attacking)
+        {
+            attackTimeTrack += Time.deltaTime;
+            if (attackTimeTrack > attackDelay)
+            {
+                AttackStart();
+                attackTimeTrack = 0;
+            }
+        }
+
+        // Resets color for flash
+        if (flashTracker > 0)
+        {
+            flashTracker -= Time.deltaTime;
+            spriteRenderer.material.SetFloat("_FlashAmount", defaultFlash * flashTracker / flashTime);
+            if (flashTracker <= 0)
+            {
+                spriteRenderer.material.SetFloat("_FlashAmount", defaultFlash);
+                spriteRenderer.material = originalMat;
+            }
+        }
     }
 
     protected void AttackStart()
@@ -39,8 +72,6 @@ public class Enemy : Character
         attacking = true;
     }
 
-    // change color
-
     protected void AttackHit()
     {
         Attack attack = attackArray[attackIndex];
@@ -50,7 +81,6 @@ public class Enemy : Character
         }
 
         spriteRenderer.sortingLayerName = "EnemyAttack";
-        // revert color
     }
 
     // Attack end triggers are handled by animation due to timing
@@ -61,6 +91,27 @@ public class Enemy : Character
         attacking = false;
         // revert hitbox
         // Add an automatic attack trigger for death and hit interrupts
+    }
+
+    protected virtual void AttackFlash()
+    {
+        Flash(attackMat, flashTime);
+    }
+
+    protected void Flash(Material mat, float time)
+    {
+        hurtMat.SetFloat("_FlashAmount", defaultFlash);
+        spriteRenderer.material = mat;
+        flashTracker = time;
+    }
+
+    public override void Hurt(float damage)
+    {
+        base.Hurt(damage);
+        if (spriteRenderer.material != attackMat)
+        {
+            Flash(hurtMat, flashTime);
+        }
     }
 
     public int GetWeakpointsHit()
