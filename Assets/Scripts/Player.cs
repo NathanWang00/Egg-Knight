@@ -49,7 +49,7 @@ public class Player : Character
         return area;
     }
 
-    public virtual void Hurt(float damage, Area attackArea)
+    public virtual void Hurt(int damage, Area attackArea)
     {
         if (area == attackArea)
         {

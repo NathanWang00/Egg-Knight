@@ -4,7 +4,6 @@ using UnityEngine;
 
 public class BasicMelee : Enemy
 {
-
     protected override void Update()
     {
         base.Update();

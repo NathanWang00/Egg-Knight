@@ -23,8 +23,9 @@ public class Enemy : Character
     protected Material originalMat;
 
     // Damage receive stuff
-    protected int weakpointsHit = 0;
+    protected int weakpointsHit = 0, hitDirection = 0;
     protected bool fullSlash = false;
+    protected Vector2 hitLocation;
 
     protected override void Awake()
     {
@@ -106,7 +107,7 @@ public class Enemy : Character
         flashTracker = time;
     }
 
-    public override void Hurt(float damage)
+    public override void Hurt(int damage)
     {
         base.Hurt(damage);
         if (spriteRenderer.material != attackMat)
@@ -138,5 +139,25 @@ public class Enemy : Character
     public void FullSlashed(bool slashed)
     {
         fullSlash = slashed;
+    }
+
+    public void HitLocation(Vector2 location)
+    {
+        hitLocation = location;
+    }
+
+    public Vector2 GetHitLocation()
+    {
+        return hitLocation;
+    }
+
+    public void HitDirection(int direction)
+    {
+        hitDirection = direction;
+    }
+
+    public int GetHitDirection()
+    {
+        return hitDirection;
     }
 }

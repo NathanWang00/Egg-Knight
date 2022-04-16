@@ -598,7 +598,7 @@ public class GameManager : MonoBehaviour
         // apply damage to enemy
         foreach (var enemy in enemiesHit)
         {
-            HurtEnemy(enemy, stabDamage, enemy.GetWeakpointsHit(), false);
+            HurtEnemy(enemy, stabDamage, enemy.GetWeakpointsHit(), false, pos, 0);
             enemy.ResetWeakpoints();
         }
     }
@@ -615,6 +615,19 @@ public class GameManager : MonoBehaviour
                 enemiesHit.Add(enemy);
                 enemy.ResetWeakpoints();
                 enemy.FullSlashed(true);
+                enemy.HitLocation(hit.point);
+                if (start.x > destination.x)
+                {
+                    enemy.HitDirection(-1);
+                }
+                else if (start.x < destination.x)
+                {
+                    enemy.HitDirection(1);
+                }
+                else
+                {
+                    enemy.HitDirection(0);
+                }
             }
         }
 
@@ -651,7 +664,7 @@ public class GameManager : MonoBehaviour
         // apply damage to enemy
         foreach (var enemy in enemiesHit)
         {
-            HurtEnemy(enemy, slashDamage, enemy.GetWeakpointsHit(), enemy.GetSlash());
+            HurtEnemy(enemy, slashDamage, enemy.GetWeakpointsHit(), enemy.GetSlash(), enemy.GetHitLocation(), enemy.GetHitDirection());
             enemy.ResetWeakpoints();
             enemy.FullSlashed(true);
         }
@@ -660,12 +673,21 @@ public class GameManager : MonoBehaviour
     public void AttackPlayer(float damage, Area area)
     {
         var testArea = area;
-        player.Hurt(damage, testArea);
+        player.Hurt(DamageVariance(damage), testArea);
     }
 
-    protected void HurtEnemy(Enemy enemy, float damage, int weakpoint, bool fullSlash)
+    protected void HurtEnemy(Enemy enemy, float damage, int weakpoint, bool fullSlash, Vector2 location, int dir)
     {
-        enemy.Hurt(damage, weakpoint, fullSlash);
+        float dmg = damage;
+        float fullSlashMultiplyer = 0;
+
+        if (fullSlash)
+        {
+            fullSlashMultiplyer = 0.3f;
+        }
+        dmg *= 1 + (WeakpointMultiplyer(weakpoint) + fullSlashMultiplyer);
+        enemy.Hurt(DamageVariance(dmg), weakpoint, fullSlash);
+        DmgNumManager.Instance.CreateDmg(location, dir, DamageVariance(dmg));
     }
 
     public Vector3 ScreenToWorld(Vector3 pos)
@@ -691,5 +713,38 @@ public class GameManager : MonoBehaviour
             touchWorldPoint = Camera.main.ScreenToWorldPoint(touchPos);
         }
         return touchPos;
+    }
+
+    public virtual int DamageVariance(float dmg)
+    {
+        dmg += Random.Range(-damageVariance / 2, damageVariance / 2) * dmg;
+        return Mathf.RoundToInt(dmg);
+    }
+
+    protected virtual float WeakpointMultiplyer(int weakpoint)
+    {
+        if (weakpoint < 1)
+        {
+            return 0;
+        }
+
+        switch (weakpoint)
+        {
+            case 1:
+                return 0.3f;
+
+            case 2:
+                return 0.75f;
+
+            case 3:
+                return 1.5f;
+        }
+        if (weakpoint > 3)
+        {
+            Debug.Log("More weakpoints than max");
+            return 1.5f;
+        }
+
+        return 0;
     }
 }

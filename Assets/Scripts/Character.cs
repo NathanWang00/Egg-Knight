@@ -18,41 +18,18 @@ public class Character : MonoBehaviour
     }
 
     // For enemies slash
-    public virtual void Hurt(float damage, int weakpoint, bool fullSlash)
+    public virtual void Hurt(int damage, int weakpoint, bool fullSlash)
     {
-        float dmg = damage;
-        float fullSlashMultiplyer = 0;
-
-        if (fullSlash)
-        {
-            fullSlashMultiplyer = 0.3f;
-        }
-
-        dmg *= 1 + (WeakpointMultiplyer(weakpoint) + fullSlashMultiplyer);
-
-        Hurt(dmg);
+        // moved modifiers to gamemanager to calc the damage beforehand
+        Hurt(damage);
     }
 
-    // For enemies stab
-    public virtual void Hurt(float damage, int weakpoint)
+    public virtual void Hurt(int damage)
     {
-        float dmg = damage;
-
-        dmg *= 1 + WeakpointMultiplyer(weakpoint);
-
-        Hurt(dmg);
-    }
-
-    public virtual void Hurt(float damage)
-    {
-        var dmg = damage;
-        dmg += Random.Range(-GameManager.damageVariance / 2, GameManager.damageVariance / 2) * dmg;
-        int intDmg = Mathf.RoundToInt(dmg);
-
         // for debug
-        GameManager.Instance.lastDamage = intDmg;
+        GameManager.Instance.lastDamage = damage;
 
-        health -= intDmg;
+        health -= damage;
         if (health <= 0 && !dead)
         {
             Die();
@@ -63,32 +40,5 @@ public class Character : MonoBehaviour
     {
         dead = true;
         Debug.Log("Dead");
-    }
-
-    protected virtual float WeakpointMultiplyer(int weakpoint)
-    {
-        if (weakpoint < 1)
-        {
-            return 0;
-        }
-
-        switch (weakpoint)
-        {
-            case 1:
-                return 0.3f;
-
-            case 2:
-                return 0.75f;
-
-            case 3:
-                return 1.5f;
-        }
-        if (weakpoint > 3)
-        {
-            Debug.Log("More weakpoints than max");
-            return 1.5f;
-        }
-
-        return 0;
     }
 }
