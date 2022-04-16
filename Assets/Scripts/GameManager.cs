@@ -12,7 +12,6 @@ public class GameManager : MonoBehaviour
     [SerializeField] protected GameObject debugObject;
     [SerializeField] protected TextMeshProUGUI vectorText;
     [SerializeField] protected LineRenderer ratioLine;
-    [HideInInspector] public int lastDamage = 0; 
     //[SerializeField] protected LineRenderer sideDodgeLineLeft;
     //[SerializeField] protected LineRenderer sideDodgeLineRight;
     //[SerializeField] protected LineRenderer backDodgeLine;
@@ -370,7 +369,7 @@ public class GameManager : MonoBehaviour
             // debug stuff
             if (Input.GetMouseButton(0))
             {
-                vectorText.text = "Touch Vector: " + touchPos + "\n" + "Touch Velo: " + currentVelo + "\n" + "Angle: " + currentAngle + "\n" + "Last Damage: " + lastDamage;
+                vectorText.text = "Touch Vector: " + touchPos + "\n" + "Touch Velo: " + currentVelo + "\n" + "Angle: " + currentAngle;
             }
         }
         else
