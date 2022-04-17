@@ -61,6 +61,13 @@ public class Enemy : Character
         }
     }
 
+    protected override void Die()
+    {
+        base.Die();
+        SpawnManager.Instance.NextWave();
+        Destroy(gameObject);
+    }
+
     protected void AttackStart()
     {
         AttackStart(0);

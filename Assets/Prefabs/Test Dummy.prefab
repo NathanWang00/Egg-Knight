@@ -124,7 +124,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21b29ecd0ee0ec648aef541fbab609fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  health: 999999
+  health: 500
   attackArray:
   - damage: 50
     animation: {fileID: 7400000, guid: afc7bc7d43a529040b38c9203fd05e74, type: 2}
