@@ -177,27 +177,6 @@ public class GameManager : MonoBehaviour
                 preslashLine.SetPosition(0, new Vector3(touchWorldPoint.x, touchWorldPoint.y, 0));
                 preslashLine.gameObject.SetActive(true);
             }
-            /*else
-            {
-                foreach (var item in slashLines)
-                {
-                    if (!item.gameObject.activeSelf)
-                    {
-                        slashLine = item;
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found)
-                {
-                    slashLine = Instantiate(slashPrefab).GetComponent<LineRenderer>();
-                    slashLines.Add(slashLine);
-                }
-                player.Windup();
-            }
-            slashLine.positionCount = 1;
-            slashLine.SetPosition(0, new Vector3(touchWorldPoint.x, touchWorldPoint.y, 0));
-            slashLine.gameObject.SetActive(true);*/
             slashOn = false;
             slashStart = false;
 
@@ -446,6 +425,7 @@ public class GameManager : MonoBehaviour
             }
         }
 
+        // timetrack stuff
         if (dodgeOn && !slashOn)
         {
             if (dodgeTimeTrack >= minDodgeTime)

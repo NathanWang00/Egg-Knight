@@ -13,6 +13,13 @@ public enum Area
 
 public class Player : Character
 {
+    [Header("Values")]
+    [SerializeField] protected float guardMax = 250;
+    [SerializeField] protected float guardDrainRate = 10, guardRecoverRate = 2.5f;
+    [SerializeField] protected HealthBar guardBar;
+    protected float currentGuard;
+    protected bool guardBroken;
+
     [Header("Animations")]
     [SerializeField] AnimationClip idleAnim;
     [SerializeField] AnimationClip leftDodgeAnim;
@@ -39,6 +46,52 @@ public class Player : Character
     protected Area area = Area.Center;
     protected bool actionable = true, guarding = false;
 
+    protected override void Start()
+    {
+        base.Start();
+        guardBar.SetHealth(guardMax);
+        currentGuard = guardMax;
+    }
+
+    protected virtual void Update()
+    {
+        if (guarding && state != States.Guard)
+        {
+            guarding = false;
+        }
+
+        if (guarding)
+        {
+            if (currentGuard > 0)
+            {
+                currentGuard -= Time.deltaTime * guardDrainRate;
+            }
+            else
+            {
+                currentGuard = 0;
+                guarding = false;
+                state = States.Idle;
+                spriteAnim.Play(idleAnim);
+                guardBroken = true;
+                guardBar.ChangeTransparency(0.5f);
+            }
+        }
+        else
+        {
+            if (currentGuard < guardMax)
+            {
+                currentGuard += Time.deltaTime * guardRecoverRate;
+            }
+            else
+            {
+                currentGuard = guardMax;
+                guardBroken = false;
+                guardBar.ChangeTransparency(1);
+            }
+        }
+        guardBar.ChangeHealth(currentGuard);
+    }
+
     public States GetState()
     {
         return state;
@@ -53,15 +106,26 @@ public class Player : Character
     {
         if (area == attackArea)
         {
-            Hurt(damage);
+            if (guarding)
+            {
+                currentGuard -= damage;
+            }
+            else
+            {
+                Hurt(damage);
+            }
         }
     }
 
     public void Guard()
     {
-        state = States.Guard;
-        area = Area.Center;
-        spriteAnim.Play(guardAnim);
+        if (!guardBroken)
+        {
+            state = States.Guard;
+            area = Area.Center;
+            guarding = true;
+            spriteAnim.Play(guardAnim);
+        }
     }
 
     public void Windup()

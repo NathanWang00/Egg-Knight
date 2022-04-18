@@ -9,7 +9,7 @@ public class SpawnManager : MonoBehaviour
     protected float waitTracker = 0;
     protected bool waiting = false;
 
-    protected int spawnIndex = 0;
+    protected int spawnIndex = 0, loopAmount = 0;
 
     private static SpawnManager _instance;
     public static SpawnManager Instance //Singleton Stuff
@@ -49,13 +49,21 @@ public class SpawnManager : MonoBehaviour
 
     protected void Spawn()
     {
+        Enemy enemy;
         if (spawnArray.Length > spawnIndex)
         {
-            Instantiate(spawnArray[spawnIndex]);
+            enemy = Instantiate(spawnArray[spawnIndex]).GetComponent<Enemy>();
         }
         else
         {
+            spawnIndex = 0;
+            loopAmount++;
+            enemy = Instantiate(spawnArray[spawnIndex]).GetComponent<Enemy>();
             Debug.Log("Out of enemies");
+        }
+        for (int i = 0; i < loopAmount; i++)
+        {
+            enemy.DoubleHealth();
         }
         spawnIndex++;
     }

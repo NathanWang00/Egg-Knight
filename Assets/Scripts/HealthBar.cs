@@ -4,7 +4,13 @@ using UnityEngine;
 
 public class HealthBar : MonoBehaviour
 {
+    private SpriteRenderer spriteRenderer;
     private float maxHealth, originalWidth;
+
+    private void Awake()
+    {
+        spriteRenderer = GetComponent<SpriteRenderer>();
+    }
 
     public void SetHealth(float health)
     {
@@ -21,5 +27,12 @@ public class HealthBar : MonoBehaviour
         }
         var x = (tempHealth / maxHealth) * originalWidth;
         transform.localScale = new Vector3(x, transform.localScale.y);
+    }
+
+    public void ChangeTransparency(float a)
+    {
+        var color = spriteRenderer.color;
+        color.a = a;
+        spriteRenderer.color = color;
     }
 }

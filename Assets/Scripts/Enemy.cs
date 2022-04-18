@@ -167,4 +167,11 @@ public class Enemy : Character
     {
         return hitDirection;
     }
+
+    // for debugging
+    public void DoubleHealth()
+    {
+        health *= 2;
+        healthBar.SetHealth(health);
+    }
 }
