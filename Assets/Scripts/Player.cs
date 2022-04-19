@@ -138,14 +138,16 @@ public class Player : Character
     {
         state = States.Stab;
         area = Area.Center;
-        spriteAnim.Play(stabAnim);
+        if (!spriteAnim.IsPlaying(stabAnim))
+            spriteAnim.Play(stabAnim);
     }
 
     public void Slash()
     {
         state = States.Slash;
         area = Area.Center;
-        spriteAnim.Play(slashAnim);
+        if (!spriteAnim.IsPlaying(slashAnim))
+            spriteAnim.Play(slashAnim);
     }
 
     public void Move(Area direction)
