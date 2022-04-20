@@ -17,8 +17,8 @@ public class Enemy : Character
     [Header("Animations")]
     [SerializeField] protected AnimationClip idle;
     [SerializeField] protected Material hurtMat, attackMat;
-    protected static float flashTime = 0.4f, defaultFlash = 0.7f;
     protected SpriteRenderer spriteRenderer;
+    protected static float flashTime = 0.4f, defaultFlash = 0.7f;
     protected float flashTracker = 0;
     protected Material originalMat;
 
@@ -29,8 +29,8 @@ public class Enemy : Character
 
     protected override void Awake()
     {
-        spriteRenderer = GetComponent<SpriteRenderer>();
         base.Awake();
+        spriteRenderer = GetComponent<SpriteRenderer>();
         originalMat = spriteRenderer.material;
         hurtMat.SetFloat("_FlashAmount", defaultFlash);
         attackMat.SetFloat("_FlashAmount", defaultFlash);

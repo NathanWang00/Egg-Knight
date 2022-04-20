@@ -11,11 +11,13 @@ public class Character : MonoBehaviour
 
     // animations
     protected SpriteAnim spriteAnim;
+    protected SpriteAnimNodes nodes;
     [SerializeField] protected HealthBar healthBar;
 
     protected virtual void Awake()
     {
         spriteAnim = GetComponent<SpriteAnim>();
+        nodes = GetComponent<SpriteAnimNodes>();
         if (healthBar == null)
             healthBar = GetComponentInChildren<HealthBar>();
     }

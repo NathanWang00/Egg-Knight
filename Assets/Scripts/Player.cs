@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using PowerTools;
+using UnityEngine.UI;
 
 public enum Area
 {
@@ -29,6 +30,13 @@ public class Player : Character
     [SerializeField] AnimationClip windupAnim;
     [SerializeField] AnimationClip stabAnim;
     [SerializeField] AnimationClip slashAnim;
+    [SerializeField] protected Material hurtMat, attackMat;
+    protected static float flashTime = 0.4f, defaultFlash = 0.7f;
+    protected float flashTracker = 0;
+    protected Image image;
+    protected Material originalMat;
+
+    public Vector2 coreNode;
 
     public enum States
     {
@@ -45,6 +53,15 @@ public class Player : Character
     protected States state = States.Idle;
     protected Area area = Area.Center;
     protected bool actionable = true, guarding = false;
+
+    protected override void Awake()
+    {
+        base.Awake();
+        image = GetComponent<Image>();
+        originalMat = image.material;
+        hurtMat.SetFloat("_FlashAmount", defaultFlash);
+        attackMat.SetFloat("_FlashAmount", defaultFlash);
+    }
 
     protected override void Start()
     {
@@ -90,6 +107,18 @@ public class Player : Character
             }
         }
         guardBar.ChangeHealth(currentGuard);
+
+        // Resets color for flash
+        if (flashTracker > 0)
+        {
+            flashTracker -= Time.deltaTime;
+            image.material.SetFloat("_FlashAmount", defaultFlash * flashTracker / flashTime);
+            if (flashTracker <= 0)
+            {
+                image.material.SetFloat("_FlashAmount", defaultFlash);
+                image.material = originalMat;
+            }
+        }
     }
 
     public States GetState()
@@ -102,8 +131,9 @@ public class Player : Character
         return area;
     }
 
-    public virtual void Hurt(int damage, Area attackArea)
+    public virtual bool Hurt(int damage, Area attackArea)
     {
+        bool hit = false;
         if (area == attackArea)
         {
             if (guarding)
@@ -112,9 +142,25 @@ public class Player : Character
             }
             else
             {
+                hit = true;
                 Hurt(damage);
             }
         }
+        return hit;
+    }
+
+    public override void Hurt(int damage)
+    {
+        base.Hurt(damage);
+        if (image.material != attackMat)
+        {
+            Flash(hurtMat, flashTime);
+        }
+    }
+
+    public Vector2 EggPosition()
+    {
+        return nodes.GetPositionRaw(0);
     }
 
     public void Guard()
@@ -180,5 +226,12 @@ public class Player : Character
                 spriteAnim.Play(backDodgeAnim);
             }
         }
+    }
+
+    protected void Flash(Material mat, float time)
+    {
+        hurtMat.SetFloat("_FlashAmount", defaultFlash);
+        image.material = mat;
+        flashTracker = time;
     }
 }

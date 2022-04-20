@@ -318,7 +318,7 @@ public class GameManager : MonoBehaviour
                         dodgeTimeTrack += Time.deltaTime;
                     }
 
-                    // stop conditions
+                    // dodge stop conditions
                     if (playerOrigin)
                     {
                         if ((touchPos - lastStop).magnitude < stopDistance)
@@ -336,7 +336,8 @@ public class GameManager : MonoBehaviour
                             // out of bounds
                             var borderX = extraX / 2;
                             var borderY = extraY / 2;
-                            if (touchPos.x > borderX && touchPos.x < borderX + Camera.main.pixelWidth && touchPos.y > borderY && touchPos.y < borderY + Camera.main.pixelHeight)
+                            if (touchPos.x > borderX && touchPos.x < borderX + Camera.main.pixelWidth && touchPos.y > borderY && 
+                                touchPos.y < borderY + Camera.main.pixelHeight && touchPos.y < Camera.main.pixelHeight * playerEnemyRatio + borderY)
                             {
                                 lastStop = touchPos;
                             }
@@ -493,22 +494,6 @@ public class GameManager : MonoBehaviour
             if (Input.GetMouseButtonDown(0))
                 Pause();
         }
-
-        /*pos.x = width * sideDodgeRatio + xBorder;
-        sideDodgeLineLeft.SetPosition(0, ScreenToWorld(pos));
-        pos.y = backDodgeRatio * height + yBorder;
-        sideDodgeLineLeft.SetPosition(1, ScreenToWorld(pos));
-
-        pos.x = width - (width * sideDodgeRatio) + xBorder;
-        sideDodgeLineRight.SetPosition(0, ScreenToWorld(pos));
-        pos.y = playerEnemyRatio * height + yBorder;
-        sideDodgeLineRight.SetPosition(1, ScreenToWorld(pos));
-
-        pos.x = xBorder;
-        pos.y = backDodgeRatio * height + yBorder;
-        backDodgeLine.SetPosition(0, ScreenToWorld(pos));
-        pos.x = width + xBorder;
-        backDodgeLine.SetPosition(1, ScreenToWorld(pos));*/
     }
 
     private void FixedUpdate()
@@ -668,7 +653,13 @@ public class GameManager : MonoBehaviour
     public void AttackPlayer(float damage, Area area)
     {
         var testArea = area;
-        player.Hurt(DamageVariance(damage), testArea);
+        bool hit = player.Hurt(DamageVariance(damage), testArea);
+        if (hit)
+        {
+            var pos = player.EggPosition() + new Vector2(letterboxCam.pixelWidth/2, 0);
+            Debug.Log(pos);
+            DmgNumManager.Instance.CreateDmg(ScreenToWorld(pos), 0, damage);
+        }
     }
 
     protected void HurtEnemy(Enemy enemy, float damage, int weakpoint, bool fullSlash, Vector2 location, int dir)
