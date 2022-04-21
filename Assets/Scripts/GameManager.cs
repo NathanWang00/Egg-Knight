@@ -648,6 +648,8 @@ public class GameManager : MonoBehaviour
             enemy.ResetWeakpoints();
             enemy.FullSlashed(true);
         }
+
+        AudioManager.Instance.Play("TestSwing");
     }
 
     public void AttackPlayer(float damage, Area area)
