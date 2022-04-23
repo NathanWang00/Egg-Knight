@@ -75,10 +75,13 @@ public class Enemy : Character
 
     protected void AttackStart(int index)
     {
-        // Change the attackIndex beforehand
-        spriteAnim.Play(attackArray[index].animation);
-        attackIndex = index;
-        attacking = true;
+        if (!GameManager.Instance.GetGameOver())
+        {
+            // Change the attackIndex beforehand
+            spriteAnim.Play(attackArray[index].animation);
+            attackIndex = index;
+            attacking = true;
+        }
     }
 
     protected void AttackHit()

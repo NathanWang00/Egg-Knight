@@ -59,6 +59,12 @@ TagManager:
   - name: EnemyAttack
     uniqueID: 2050346391
     locked: 0
+  - name: PlayerBack
+    uniqueID: 1139092407
+    locked: 0
+  - name: EnemyAttackBack
+    uniqueID: 3703696501
+    locked: 0
   - name: DefenseLine
     uniqueID: 1877240425
     locked: 0

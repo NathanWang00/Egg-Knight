@@ -4,10 +4,12 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using System.Linq;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
     [Header("Debug")]
+    [SerializeField] protected bool autoStart;
     [SerializeField] protected bool debugOn;
     [SerializeField] protected GameObject debugObject;
     [SerializeField] protected TextMeshProUGUI vectorText;
@@ -64,8 +66,15 @@ public class GameManager : MonoBehaviour
     [SerializeField] protected int slashDamage = 120;
     public static float damageVariance = 0.1f;
 
+    [Header("Options")]
+    [SerializeField] protected OptionsMenu optionsMenu;
+    [SerializeField] protected GameObject gameOverMenu;
+    [SerializeField] protected GameObject startMenu;
+    [SerializeField] protected GameObject credits;
+    protected bool gameOver = false;
+
     // UI stuff
-    protected bool paused = false;
+    protected bool paused = true;
 
     protected TapManager tapManager;
 
@@ -107,12 +116,24 @@ public class GameManager : MonoBehaviour
         }
         tapManager = GetComponentInChildren<TapManager>(true);
         player = FindObjectOfType<Player>();
+        if (autoStart)
+        {
+            startMenu.SetActive(false);
+            paused = false;
+        }
+        else
+        {
+            startMenu.SetActive(true);
+            paused = true;
+            Time.timeScale = 0;
+        }
     }
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.P))
+        if (Input.GetKeyDown(KeyCode.Escape))
         {
+            Debug.Log("Test");
             Pause();
         }
 
@@ -489,11 +510,6 @@ public class GameManager : MonoBehaviour
             pos.x = width + xBorder;
             ratioLine.SetPosition(1, ScreenToWorld(pos));
         }
-        else
-        {
-            if (Input.GetMouseButtonDown(0))
-                Pause();
-        }
     }
 
     private void FixedUpdate()
@@ -748,17 +764,58 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    public void StartGame()
+    {
+        startMenu.SetActive(false);
+        paused = false;
+        Time.timeScale = 1;
+    }
+
+    public void ShowCredits()
+    {
+        credits.SetActive(true);
+    }
+
+    public void HideCredits()
+    {
+        credits.SetActive(false);
+    }
+
     public void Pause(bool pause)
     {
         if (pause)
         {
             paused = true;
             Time.timeScale = 0;
+            optionsMenu.gameObject.SetActive(true);
         }
         else
         {
             paused = false;
             Time.timeScale = 1;
+            optionsMenu.gameObject.SetActive(false);
+            tapConditions = false;
         }
+    }
+
+    public void GameOver()
+    {
+        gameOver = true;
+        gameOverMenu.SetActive(true);
+    }
+
+    public void Restart()
+    {
+        SceneManager.LoadScene("Main");
+    }
+
+    public void Quit()
+    {
+        Application.Quit();
+    }
+
+    public bool GetGameOver()
+    {
+        return gameOver;
     }
 }

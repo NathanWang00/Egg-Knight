@@ -2,9 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[System.Serializable]
+public struct Spawn { public GameObject spawn; public Vector3 pos; }
+
 public class SpawnManager : MonoBehaviour
 {
-    [SerializeField] protected GameObject[] spawnArray;
+    [SerializeField] protected Spawn[] spawnArray;
     [SerializeField] protected float waitTime;
     protected float waitTracker = 0;
     protected bool waiting = false;
@@ -52,13 +55,13 @@ public class SpawnManager : MonoBehaviour
         Enemy enemy;
         if (spawnArray.Length > spawnIndex)
         {
-            enemy = Instantiate(spawnArray[spawnIndex]).GetComponent<Enemy>();
+            enemy = Instantiate(spawnArray[spawnIndex].spawn, spawnArray[spawnIndex].pos, Quaternion.identity).GetComponent<Enemy>();
         }
         else
         {
             spawnIndex = 0;
             loopAmount++;
-            enemy = Instantiate(spawnArray[spawnIndex]).GetComponent<Enemy>();
+            enemy = Instantiate(spawnArray[spawnIndex].spawn, spawnArray[spawnIndex].pos, Quaternion.identity).GetComponent<Enemy>();
             Debug.Log("Out of enemies");
         }
         for (int i = 0; i < loopAmount; i++)

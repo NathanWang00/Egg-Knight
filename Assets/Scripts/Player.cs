@@ -30,6 +30,7 @@ public class Player : Character
     [SerializeField] AnimationClip windupAnim;
     [SerializeField] AnimationClip stabAnim;
     [SerializeField] AnimationClip slashAnim;
+    [SerializeField] Canvas canvas;
     [SerializeField] protected Material hurtMat, attackMat;
     protected static float flashTime = 0.4f, defaultFlash = 0.7f;
     protected float flashTracker = 0;
@@ -198,6 +199,10 @@ public class Player : Character
 
     public void Move(Area direction)
     {
+        if (area == Area.Back && direction != Area.Back)
+        {
+            canvas.sortingLayerName = "Player";
+        }
         if (actionable)
         {
             if (direction == Area.Left)
@@ -223,6 +228,7 @@ public class Player : Character
             {
                 state = States.BackDodge;
                 area = Area.Back;
+                canvas.sortingLayerName = "PlayerBack";
                 spriteAnim.Play(backDodgeAnim);
             }
         }
@@ -233,5 +239,11 @@ public class Player : Character
         hurtMat.SetFloat("_FlashAmount", defaultFlash);
         image.material = mat;
         flashTracker = time;
+    }
+
+    protected override void Die()
+    {
+        base.Die();
+        GameManager.Instance.GameOver();
     }
 }

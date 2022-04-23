@@ -30,7 +30,7 @@ RectTransform:
   m_GameObject: {fileID: 4373808812776316165}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.81304616, y: 0.81304616, z: 0.81304616}
+  m_LocalScale: {x: 0.7073195, y: 0.7073195, z: 0.7073195}
   m_Children:
   - {fileID: 4373808814288915391}
   - {fileID: 4373808813042639364}
@@ -83,7 +83,7 @@ SpriteRenderer:
   m_SortingLayerID: -1959830953
   m_SortingLayer: 1
   m_SortingOrder: -20
-  m_Sprite: {fileID: 21300000, guid: 7973395791b4a1345b10bc38311b8d9b, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 5acc98a9d25ad2a4380c48720fe6babc, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -130,7 +130,7 @@ MonoBehaviour:
   attackArray:
   - damage: 75
     animation: {fileID: 7400000, guid: afc7bc7d43a529040b38c9203fd05e74, type: 2}
-    areas: 0000000003000000
+    areas: 00000000
   attackDelay: 2
   idle: {fileID: 7400000, guid: e820899591f241e40972222acd68d775, type: 2}
   hurtMat: {fileID: 2100000, guid: 05ea63ae9313070419fd3085d6133ad8, type: 2}
