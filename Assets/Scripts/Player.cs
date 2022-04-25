@@ -140,11 +140,13 @@ public class Player : Character
             if (guarding)
             {
                 currentGuard -= damage;
+                soundEffectManager.Play("Guard");
             }
             else
             {
                 hit = true;
                 Hurt(damage);
+                soundEffectManager.Play("PlayerHurt");
             }
         }
         return hit;

@@ -13,6 +13,7 @@ public class Character : MonoBehaviour
     protected SpriteAnim spriteAnim;
     protected SpriteAnimNodes nodes;
     [SerializeField] protected HealthBar healthBar;
+    [SerializeField] protected AudioManager soundEffectManager;
 
     protected virtual void Awake()
     {
@@ -31,10 +32,20 @@ public class Character : MonoBehaviour
     }
 
     // For enemies slash
-    public virtual void Hurt(int damage, int weakpoint, bool fullSlash)
+    public virtual void Hurt(float damage, int weakpoint, bool fullSlash, Vector2 location, int dir)
     {
-        // moved modifiers to gamemanager to calc the damage beforehand, this is just for future effects
-        Hurt(damage);
+        float dmg = damage;
+        float fullSlashMultiplyer = 0;
+
+        if (fullSlash)
+        {
+            fullSlashMultiplyer = 0.3f;
+        }
+        dmg *= 1 + fullSlashMultiplyer;
+        dmg *= 1 + (WeakpointMultiplyer(weakpoint));
+        int intDmg = GameManager.Instance.DamageVariance(dmg);
+        Hurt(intDmg);
+        DmgNumManager.Instance.CreateDmg(location, dir, intDmg);
     }
 
     public virtual void Hurt(int damage)
@@ -54,5 +65,32 @@ public class Character : MonoBehaviour
     {
         dead = true;
         Debug.Log("Dead");
+    }
+
+    protected virtual float WeakpointMultiplyer(int weakpoint)
+    {
+        if (weakpoint < 1)
+        {
+            return 0;
+        }
+
+        switch (weakpoint)
+        {
+            case 1:
+                return 0.3f;
+
+            case 2:
+                return 0.75f;
+
+            case 3:
+                return 1.5f;
+        }
+        if (weakpoint > 3)
+        {
+            Debug.Log("More weakpoints than max");
+            return 1.5f;
+        }
+
+        return 0;
     }
 }

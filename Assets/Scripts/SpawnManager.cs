@@ -10,7 +10,7 @@ public class SpawnManager : MonoBehaviour
     [SerializeField] protected Spawn[] spawnArray;
     [SerializeField] protected float waitTime;
     protected float waitTracker = 0;
-    protected bool waiting = false;
+    protected bool waiting = true;
 
     protected int spawnIndex = 0, loopAmount = 0;
 
@@ -32,14 +32,9 @@ public class SpawnManager : MonoBehaviour
         _instance = this;
     }
 
-    private void Start()
-    {
-        Spawn();
-    }
-
     private void Update()
     {
-        if (waitTracker <= 0 && waiting)
+        if (waitTracker <= 0 && waiting && GameManager.Instance.GetStarted())
         {
             waiting = false;
             Spawn();

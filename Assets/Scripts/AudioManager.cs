@@ -31,22 +31,9 @@ public class Sound
 public class AudioManager : MonoBehaviour
 {
     [SerializeField] Sound[] sounds;
-    private static AudioManager _instance;
-    public static AudioManager Instance //Singleton Stuff
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                Debug.Log("AudioManager is null");
-            }
-            return _instance;
-        }
-    }
 
     private void Awake()
     {
-        _instance = this;
         foreach (Sound s in sounds)
         {
             //go through each sound in our sound array
@@ -93,6 +80,27 @@ public class AudioManager : MonoBehaviour
         Sound s = GetSound(name);
         if (s == null) return;
         s.source.Stop();
+    }
+
+    public float GetLength(string name)
+    {
+        Sound s = GetSound(name);
+        if (s == null) return 0;
+        return s.clip.length;
+    }
+    public void PlayScheduled(string name, float time)
+    {
+        Sound s = GetSound(name);
+        if (s == null) return;
+        s.source.PlayScheduled(time);
+    }
+
+    public bool isPlaying(string name)
+    {
+        Sound s = GetSound(name);
+        if (s == null) return false;
+
+        return s.source.isPlaying;
     }
 
     public void UnPause(string name)

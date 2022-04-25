@@ -57,6 +57,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] protected float guardTime = 0.5f;
     [SerializeField] protected float minDodgeTime = 1;
     [SerializeField] protected float doubleTapGuard = 0.3f;
+    [SerializeField] protected float dodgeRadius = 15;
     protected float dodgeTimeTrack = 0, doubleTapTrack = 0;
     protected bool dodgeOn = false, guardOn = false, doubleTapConditions = false;
     protected Player player;
@@ -71,7 +72,10 @@ public class GameManager : MonoBehaviour
     [SerializeField] protected GameObject gameOverMenu;
     [SerializeField] protected GameObject startMenu;
     [SerializeField] protected GameObject credits;
-    protected bool gameOver = false;
+    [SerializeField] protected AudioManager soundEffectPlayer;
+    [SerializeField] protected AudioManager bgmPlayer;
+    protected bool gameOver = false, started = false;
+    protected GameOver gameOverScript;
 
     // UI stuff
     protected bool paused = true;
@@ -118,14 +122,13 @@ public class GameManager : MonoBehaviour
         player = FindObjectOfType<Player>();
         if (autoStart)
         {
-            startMenu.SetActive(false);
-            paused = false;
+            StartGame();
         }
         else
         {
             startMenu.SetActive(true);
             paused = true;
-            Time.timeScale = 0;
+            bgmPlayer.Play("TitleIntro");
         }
     }
 
@@ -133,7 +136,6 @@ public class GameManager : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            Debug.Log("Test");
             Pause();
         }
 
@@ -159,7 +161,21 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        if (!paused)
+        // bgm logic
+        if (!started && !bgmPlayer.isPlaying("TitleIntro") && !bgmPlayer.isPlaying("TitleLoop"))
+        {
+            bgmPlayer.Play("TitleLoop");
+        }
+        if (started && !gameOver && !bgmPlayer.isPlaying("BattleIntro") && !bgmPlayer.isPlaying("BattleLoop"))
+        {
+            bgmPlayer.Play("BattleLoop");
+        }
+        if (gameOver && !bgmPlayer.isPlaying("GameOverIntro") && !bgmPlayer.isPlaying("GameOverLoop"))
+        {
+            bgmPlayer.Play("GameOverLoop");
+        }
+
+        if (!paused && !gameOver && started)
         {
             if (Input.GetMouseButtonDown(0))
             {
@@ -247,7 +263,13 @@ public class GameManager : MonoBehaviour
                 // slash stuff and graphics
                 if (!slashOn)
                 {
-                    if ((touchPos - initialPos).magnitude > startRadius && !slashStart)
+                    var radius = startRadius;
+                    if (playerOrigin)
+                    {
+                        radius = dodgeRadius;
+                    }
+
+                    if ((touchPos - initialPos).magnitude > radius && !slashStart)
                     {
                         // where slash is turned on
                         currentVelo = touchPos - lastTouch;
@@ -336,7 +358,11 @@ public class GameManager : MonoBehaviour
                         {
                             Debug.Log("Unknown dodge angle " + initialAngle);
                         }
-                        dodgeTimeTrack += Time.deltaTime;
+                        if (dodgeOn)
+                        {
+                            dodgeTimeTrack += Time.deltaTime;
+                        }
+                            
                     }
 
                     // dodge stop conditions
@@ -450,7 +476,7 @@ public class GameManager : MonoBehaviour
                     doubleTapConditions = false;
                 }
 
-                if (guardOn)
+                if (guardOn && !dodgeOn)
                 {
                     guardOn = false;
                     player.Move(Area.Center);
@@ -590,13 +616,18 @@ public class GameManager : MonoBehaviour
                 enemy.WeakpointHit(1);
             }
         }
-
+        var isHit = false;
         // apply damage to enemy
         foreach (var enemy in enemiesHit)
         {
             HurtEnemy(enemy, stabDamage, enemy.GetWeakpointsHit(), false, pos, 0);
-            enemy.ResetWeakpoints();
+            isHit = true;
         }
+        if (isHit)
+        {
+            soundEffectPlayer.Play("MonsterHurt");
+        }
+        soundEffectPlayer.Play("Stab");
     }
 
     protected void Slash(Vector2 start, Vector2 destination)
@@ -656,16 +687,21 @@ public class GameManager : MonoBehaviour
                 enemy.FullSlashed(false);
             }
         }
-
+        var isHit = false;
         // apply damage to enemy
         foreach (var enemy in enemiesHit)
         {
             HurtEnemy(enemy, slashDamage, enemy.GetWeakpointsHit(), enemy.GetSlash(), enemy.GetHitLocation(), enemy.GetHitDirection());
             enemy.ResetWeakpoints();
             enemy.FullSlashed(true);
+            isHit = true;
+        }
+        if (isHit)
+        {
+            soundEffectPlayer.Play("MonsterHurt");
         }
 
-        AudioManager.Instance.Play("TestSwing");
+        soundEffectPlayer.Play("TestSwing");
     }
 
     public void AttackPlayer(float damage, Area area)
@@ -682,16 +718,7 @@ public class GameManager : MonoBehaviour
 
     protected void HurtEnemy(Enemy enemy, float damage, int weakpoint, bool fullSlash, Vector2 location, int dir)
     {
-        float dmg = damage;
-        float fullSlashMultiplyer = 0;
-
-        if (fullSlash)
-        {
-            fullSlashMultiplyer = 0.3f;
-        }
-        dmg *= 1 + (WeakpointMultiplyer(weakpoint) + fullSlashMultiplyer);
-        enemy.Hurt(DamageVariance(dmg), weakpoint, fullSlash);
-        DmgNumManager.Instance.CreateDmg(location, dir, DamageVariance(dmg));
+        enemy.Hurt(damage, weakpoint, fullSlash, location, dir);
     }
 
     public Vector3 ScreenToWorld(Vector3 pos)
@@ -725,33 +752,6 @@ public class GameManager : MonoBehaviour
         return Mathf.RoundToInt(dmg);
     }
 
-    protected virtual float WeakpointMultiplyer(int weakpoint)
-    {
-        if (weakpoint < 1)
-        {
-            return 0;
-        }
-
-        switch (weakpoint)
-        {
-            case 1:
-                return 0.3f;
-
-            case 2:
-                return 0.75f;
-
-            case 3:
-                return 1.5f;
-        }
-        if (weakpoint > 3)
-        {
-            Debug.Log("More weakpoints than max");
-            return 1.5f;
-        }
-
-        return 0;
-    }
-
     public void Pause()
     {
         if (paused)
@@ -768,7 +768,10 @@ public class GameManager : MonoBehaviour
     {
         startMenu.SetActive(false);
         paused = false;
-        Time.timeScale = 1;
+        started = true;
+        bgmPlayer.Stop("TitleLoop");
+        bgmPlayer.Stop("TitleIntro");
+        bgmPlayer.Play("BattleIntro");
     }
 
     public void ShowCredits()
@@ -779,6 +782,11 @@ public class GameManager : MonoBehaviour
     public void HideCredits()
     {
         credits.SetActive(false);
+    }
+
+    public void Fullscreen()
+    {
+        Screen.fullScreen = !Screen.fullScreen;
     }
 
     public void Pause(bool pause)
@@ -802,6 +810,12 @@ public class GameManager : MonoBehaviour
     {
         gameOver = true;
         gameOverMenu.SetActive(true);
+        gameOverScript = gameOverMenu.GetComponent<GameOver>();
+        gameOverScript.End();
+
+        bgmPlayer.Stop("BattleIntro");
+        bgmPlayer.Stop("BattleLoop");
+        bgmPlayer.Play("GameOverIntro");
     }
 
     public void Restart()
@@ -817,5 +831,10 @@ public class GameManager : MonoBehaviour
     public bool GetGameOver()
     {
         return gameOver;
+    }
+
+    public bool GetStarted()
+    {
+        return started;
     }
 }

@@ -11,7 +11,7 @@ public class Enemy : Character
     [SerializeField] protected Attack[] attackArray;
     [SerializeField] protected float attackDelay;
     protected int attackIndex = 0;
-    protected bool attacking = false;
+    protected bool attacking = false, attackEnabled = true;
     protected float attackTimeTrack = 0;
 
     [Header("Animations")]
@@ -34,11 +34,12 @@ public class Enemy : Character
         originalMat = spriteRenderer.material;
         hurtMat.SetFloat("_FlashAmount", defaultFlash);
         attackMat.SetFloat("_FlashAmount", defaultFlash);
+        soundEffectManager = GameObject.Find("Sound Effect Manager").GetComponent<AudioManager>();
     }
 
     protected virtual void Update()
     {
-        if (!attacking)
+        if (!attacking && attackEnabled)
         {
             attackTimeTrack += Time.deltaTime;
             if (attackTimeTrack > attackDelay)
@@ -68,14 +69,14 @@ public class Enemy : Character
         Destroy(gameObject);
     }
 
-    protected void AttackStart()
+    protected virtual void AttackStart()
     {
-        AttackStart(0);
+        AttackStart(Random.Range(0, attackArray.Length));
     }
 
     protected void AttackStart(int index)
     {
-        if (!GameManager.Instance.GetGameOver())
+        if (!GameManager.Instance.GetGameOver() && GameManager.Instance.GetStarted())
         {
             // Change the attackIndex beforehand
             spriteAnim.Play(attackArray[index].animation);
@@ -93,6 +94,7 @@ public class Enemy : Character
         }
 
         spriteRenderer.sortingLayerName = "EnemyAttack";
+        soundEffectManager.Play("EnemyAttack");
     }
 
     // Attack end triggers are handled by animation due to timing
@@ -174,7 +176,7 @@ public class Enemy : Character
     // for debugging
     public void DoubleHealth()
     {
-        health *= 2;
+        health = Mathf.FloorToInt(health * 1.5f);
         healthBar.SetHealth(health);
     }
 }
